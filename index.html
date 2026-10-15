@@ -542,9 +542,12 @@ function room(work){
     for(let j=1;j<=6;j++){pts.push([L0+2+(j%2?3:-3),top+j*20-10]);pts.push([R0-2+(j%2?3:-3),top+j*20-10]);}
     pts.forEach(([x,y],i)=>s+=bulb(x,y+3,BC[i%4]));
     if(night)lights+=pts.map(([x,y],i)=>`<circle cx="${x.toFixed(1)}" cy="${(y+4).toFixed(1)}" r="7" fill="${BC[i%4]}" opacity=".55" filter="url(#glow)"/>`).join("");}
-  if(sh.fanions){const L0=176,R0=262,y0=112;s+=`<path d="M${L0} ${y0}Q${(L0+R0)/2} ${y0+16} ${R0} ${y0}" fill="none" stroke="${OUT}" stroke-width="1"/><circle cx="${L0}" cy="${y0}" r="1.8" fill="#c9b6a6" ${st}/><circle cx="${R0}" cy="${y0}" r="1.8" fill="#c9b6a6" ${st}/>`;
-    const FC=["#f2a07b","#f7c948","#9fc58a","#7fa8c9","#e9a1b5","#f7c948"];
-    for(let i=0;i<6;i++){const tt=(i+.5)/6,u=1-tt,x=u*u*L0+2*u*tt*(L0+R0)/2+tt*tt*R0,y=u*u*y0+2*u*tt*(y0+16)+tt*tt*y0;s+=`<path d="M${(x-6).toFixed(1)} ${(y-.5).toFixed(1)}L${(x+6).toFixed(1)} ${(y-.5).toFixed(1)}L${x.toFixed(1)} ${(y+11).toFixed(1)}Z" fill="${FC[i]}" stroke="${OUT}" stroke-width="1" stroke-linejoin="round"/>`;}}
+  if(sh.fanions){const L0=180,R0=258,y0=104,sag=8;
+    s+=`<path d="M${L0} ${y0}Q${(L0+R0)/2} ${y0+sag*2} ${R0} ${y0}" fill="none" stroke="${OUT}" stroke-width=".9"/><circle cx="${L0}" cy="${y0}" r="1.6" fill="#c9b6a6" stroke="${OUT}" stroke-width="1"/><circle cx="${R0}" cy="${y0}" r="1.6" fill="#c9b6a6" stroke="${OUT}" stroke-width="1"/>`;
+    const FC=["#f7b7a3","#fbe39a","#bfe0b0","#b9d7ee","#f6c1d4","#fbe39a","#bfe0b0","#f7b7a3","#d9c9ef","#f6c1d4"],n=FC.length;
+    for(let i=0;i<n;i++){const tt=(i+.5)/n,u=1-tt,x=u*u*L0+2*u*tt*(L0+R0)/2+tt*tt*R0,y=u*u*y0+2*u*tt*(y0+sag*2)+tt*tt*y0,
+      dy=(1-tt)*tt*sag*4*.18,ang=((tt-.5)*-22).toFixed(1);
+      s+=`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${ang})"><path d="M-3.4 0L3.4 0L0.4 7.2Q0 7.9 -0.4 7.2Z" fill="${FC[i]}" stroke="${OUT}" stroke-width=".8" stroke-linejoin="round"/>${i%2?`<circle cx="0" cy="2.4" r=".8" fill="#fffaf2"/>`:`<path d="M-1.6 1.6h3.2" stroke="#fffaf2" stroke-width=".8" stroke-linecap="round"/>`}</g>`;}}
   if(sh.guirlandebib&&sh.bibliotheque){let d="M302 92",pts=[];const xs=[302,316,330,344,358,372,386,398];
     for(let i=0;i<xs.length-1;i++){const x0=xs[i],x1=xs[i+1];d+=`Q${(x0+x1)/2} ${100} ${x1} 92`;pts.push([(x0+x1)/2,96]);}
     d+=`M398 92Q404 140 396 190Q402 220 396 ${FLOOR-6}`;[[400,116],[399,140],[398,166],[399,200],[398,222]].forEach(q=>pts.push(q));
