@@ -86,6 +86,11 @@ button:disabled{opacity:.4;cursor:not-allowed}
 #customApps.phoneapps label{border-radius:12px;padding:6px 8px;min-width:0}
 #customApps.phoneapps label span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 #customApps img{width:24px;height:24px;border-radius:6px;flex:none}
+.catbox{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:18px;border:2px solid var(--line);background:color-mix(in srgb,var(--sun-soft) 35%,transparent)}
+.foodbar{height:12px;border-radius:99px;background:var(--line);overflow:hidden}
+.foodbar i{display:block;height:100%;background:linear-gradient(90deg,#c9806a,#e9b47a)}
+.catrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.catrow .note{flex:1 1 160px}
 .timer{font-family:var(--display);font-size:4.4rem;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;line-height:1}
 .bar{height:12px;border-radius:99px;background:var(--line);overflow:hidden;border:2px solid var(--line)}
 .bar i{display:block;height:100%;width:0;background:var(--sun);transition:width .5s linear}
@@ -219,6 +224,7 @@ fieldset legend{padding:0 6px}
     <h2 id="d-title">Décorer ma chambre</h2>
     <p class="note">Les objets marqués d'une couronne font partie de la collection <b>Golden</b>, bientôt disponible. Tu peux déjà les essayer.</p>
     <div class="shop" id="shop"></div>
+    <div id="catPanel"></div>
     <h2>Ambiance</h2>
     <div class="opts" id="themes"></div>
   </section>
@@ -284,7 +290,7 @@ const DECO=[
   {id:"posters",name:"Notes et polaroïds",cost:3},{id:"tableau",name:"Petits cadres",cost:4},{id:"horloge",name:"Horloge",cost:4},
   {id:"guirlande",name:"Guirlande étoiles",cost:5},{id:"guirlandefen",name:"Guirlande fenêtre",cost:4},{id:"fanions",name:"Fanions au-dessus du bureau",cost:4},{id:"guirlandebib",name:"Guirlande bibliothèque",cost:4},{id:"etagere",name:"Étagère plantes et radio",cost:6},{id:"pouf",name:"Pouf",cost:5},
   {id:"monstera",name:"Grande plante",cost:6},{id:"tapisdoux",name:"Tapis à carreaux",cost:7},{id:"lampadaire",name:"Lampadaire",cost:7},
-  {id:"bibliotheque",name:"Bibliothèque",cost:10},{id:"platine",name:"Platine vinyle (bibliothèque)",cost:8},{id:"chaton",name:"Chaton",cost:12},
+  {id:"bibliotheque",name:"Bibliothèque",cost:10},{id:"platine",name:"Platine vinyle (bibliothèque)",cost:8},{id:"chaton",name:"Chaton (avec sa gamelle)",cost:12},
   {id:"sapin",name:"Petit sapin lumineux",gold:true},{id:"aquarium",name:"Bocal à poisson",gold:true},
   {id:"veilleuse",name:"Veilleuse lune",gold:true},{id:"papillons",name:"Papillons en papier",gold:true}
 ];
@@ -312,6 +318,27 @@ const GOLDEN={
   "moutarde":{name:"Moutarde",price:"1,49 €",kind:"theme"},
   "minuit":{name:"Minuit",price:"1,49 €",kind:"theme"}
 };
+Object.assign(GOLDEN,{
+  "coat-gris":{name:"Chat gris tigré",price:"0,99 €",kind:"cat"},"coat-noir":{name:"Chat noir",price:"0,99 €",kind:"cat"},
+  "coat-blanc":{name:"Chat blanc",price:"0,99 €",kind:"cat"},"coat-tricolore":{name:"Chat tricolore",price:"1,49 €",kind:"cat"},
+  "coat-siamois":{name:"Chat siamois",price:"1,49 €",kind:"cat"},
+  "bowl-fleur":{name:"Gamelle fleurie",price:"0,99 €",kind:"cat"},"bowl-poisson":{name:"Gamelle poisson",price:"0,99 €",kind:"cat"},
+  "bowl-doree":{name:"Gamelle dorée",price:"1,49 €",kind:"cat"},
+  "food-pate":{name:"Pâté gourmet",price:"0,49 €",kind:"cat"}
+});
+/* Le chat : pelages, gamelles, repas. La gamelle se vide en 12 h ; vide, le chat attend simplement à côté. */
+const COATS={
+  roux:{name:"Roux tigré",gold:false,body:"#f5b26b",stripe:"#e08c42",paw:"#fbd3a6",pattern:"stripes"},
+  gris:{name:"Gris tigré",gold:true,body:"#b9b4ae",stripe:"#8a847e",paw:"#e8e3dc",pattern:"stripes"},
+  noir:{name:"Noir",gold:true,body:"#4d4350",stripe:"#4d4350",paw:"#6d6270",pattern:"none"},
+  blanc:{name:"Blanc",gold:true,body:"#fbf6ee",stripe:"#fbf6ee",paw:"#ffffff",pattern:"none"},
+  tricolore:{name:"Tricolore",gold:true,body:"#fbf6ee",stripe:"#f5b26b",paw:"#ffffff",pattern:"patches"},
+  siamois:{name:"Siamois",gold:true,body:"#f3e6d3",stripe:"#7a5a44",paw:"#7a5a44",pattern:"points"}
+};
+const BOWLS={basique:{name:"Bleue",gold:false},fleur:{name:"Fleurie",gold:true},poisson:{name:"Poisson",gold:true},doree:{name:"Dorée",gold:true}};
+const FOODS={croquettes:{name:"Croquettes",cost:2},pate:{name:"Pâté gourmet",gold:true}};
+const FOOD_MS=12*3600000;
+const foodLevel=()=>{const b=state.cat.bowl;return b.filledAt?Math.max(0,1-(Date.now()-b.filledAt)/FOOD_MS):0;};
 const isGolden=id=>!!GOLDEN[id];
 const GOLD_WEAR={hat:{couronne:"Couronne dorée"},glasses:{etoiles:"Lunettes étoiles"},neck:{collier:"Collier de perles"},back:{ailes:"Ailes de papillon"}};
 const WARDROBE=[
@@ -326,7 +353,8 @@ const WARDROBE=[
 /* ===================== État ===================== */
 let state={daily:RULES.daily, nextDaily:null, pauses:RULES.daily, day:today(), unlocks:{}, focus:null, workDay:today(), workMs:0, blocks:0, hard:{}, custom:[],
   rays:5, owned:{creme:true,"tint-soleil":true}, shown:{}, theme:"creme",
-  char:{name:"Soleil",tint:"soleil",hair:null,glasses:null,hat:null,neck:null,ears:null,back:null}};
+  char:{name:"Soleil",tint:"soleil",hair:null,glasses:null,hat:null,neck:null,ears:null,back:null},
+  cat:{coat:"roux",bowlType:"basique",bowl:{food:"croquettes",filledAt:Date.now()}}};
 (function load(){
   try{
     const s=JSON.parse(localStorage.getItem("sunrise2"));
@@ -348,6 +376,8 @@ let preview=null; // {char:{…}} ou {shown:{…}} ou {theme} : essai d'un objet
 const CH=()=>preview&&preview.char?Object.assign({},state.char,preview.char):state.char;
 const SH=()=>preview&&preview.shown?Object.assign({},state.shown,preview.shown):state.shown;
 const TH=()=>preview&&preview.theme?preview.theme:state.theme;
+if(!state.cat)state.cat={coat:"roux",bowlType:"basique",bowl:{food:"croquettes",filledAt:Date.now()}};
+const CAT=()=>preview&&preview.cat?Object.assign({},state.cat,preview.cat,{bowl:Object.assign({},state.cat.bowl,preview.cat.bowl||{})}):state.cat;
 function save(){try{localStorage.setItem("sunrise2",JSON.stringify(state));}catch(e){}syncNative();}
 const $=id=>document.getElementById(id);
 const setHTML=(el,h)=>{if(el._h!==h){el._h=h;el.innerHTML=h;}};
@@ -663,16 +693,7 @@ function room(work){
   s+=`</g>`;
   if(work)s+=`<g transform="translate(206 182) scale(.95)" filter="url(#rough)">${charBack(CH())}</g>`;
   s+=`<g filter="url(#rough)">${chairBack}</g>`;
-  if(sh.chaton)s+=`<g transform="translate(66 ${FLOOR+38})" filter="url(#rough)">${shadow(2,10,30,5)}
-    <path d="M-26 6q-6 -18 14 -22q20 -4 34 6q10 8 4 18q-4 6 -22 6q-24 0 -30 -8z" fill="#f5b26b" ${st}/>
-    <path d="M-6 -14q2 8 -2 18M6 -14q2 8 -1 18M16 -10q2 8 -2 16" stroke="#e08c42" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <path d="M24 10q8 4 2 10q-10 6 -38 4" fill="none" stroke="${OUT}" stroke-width="5.6" stroke-linecap="round"/><path d="M24 10q8 4 2 10q-10 6 -38 4" fill="none" stroke="#f5b26b" stroke-width="3" stroke-linecap="round"/><path d="M-10 23q-3 1 -4 0" stroke="#e08c42" stroke-width="2" stroke-linecap="round"/>
-    <ellipse cx="-22" cy="4" rx="14" ry="11" fill="#f5b26b" ${st}/>
-    <path d="M-33 -3l-2 -11l9 6zM-17 -6l5 -10l3 11z" fill="#f5b26b" ${st}/><path d="M-32 -6l-1 -5l4 3zM-15 -8l3 -5l1 5z" fill="#f6c7c0"/>
-    <path d="M-29 4q2 2 4 0M-20 4q2 2 4 0" fill="none" stroke="${OUT}" stroke-width="1.3" stroke-linecap="round"/><path d="M-23.5 7.5l1.5 1.2l1.5 -1.2" fill="#e98b8b" stroke="${OUT}" stroke-width=".8"/>
-    <path d="M-36 8h-6M-36 10.5l-5 2M-9 8h6M-9 10.5l5 2" stroke="${OUT}" stroke-width=".7" opacity=".6"/>
-    <ellipse cx="-12" cy="14" rx="5" ry="3.4" fill="#fbd3a6" ${st}/><ellipse cx="-2" cy="15" rx="5" ry="3.4" fill="#fbd3a6" ${st}/>
-    <text x="10" y="-14" font-family="Gaegu,cursive" font-size="9" fill="${OUT}" opacity=".6">z</text><text x="16" y="-22" font-family="Gaegu,cursive" font-size="7" fill="${OUT}" opacity=".5">z</text></g>`;
+  if(sh.chaton)s+=catScene(CAT(),FLOOR);
   if(sh.pouf)s+=`<g transform="translate(118 ${FLOOR+44})" filter="url(#rough)">${shadow(0,9,22,4)}<path d="M-20 0v-10a20 8 0 0 1 40 0v10a20 8 0 0 1 -40 0z" fill="#9fc58a" ${st}/><ellipse cy="-10" rx="20" ry="8" fill="#b9d6a5" ${st}/></g>`;
   // petit soleil debout dans la chambre quand on ne travaille pas
   if(!work)s+=`<g transform="translate(${sh.bibliotheque?262:330} ${FLOOR+19}) scale(1.05)" filter="url(#rough)">${charSVG(CH(),false)}</g>`;
@@ -680,6 +701,61 @@ function room(work){
   s+=`<rect width="400" height="300" fill="url(#warm)"/><rect width="400" height="300" fill="${tone[0]}" opacity="${tone[1]}"/>${lights}<rect width="400" height="300" fill="url(#vig)"/>`;
   s+=`<rect width="400" height="300" filter="url(#grain)" pointer-events="none"/></svg>`;
   return s;
+}
+
+/* ===================== Dessin : le chat et sa gamelle ===================== */
+function bowlSVG(type,food,level){
+  const B={basique:["#9cc3e0","#7fa8c9"],fleur:["#fbf1e3","#f2c9b8"],poisson:["#b9d7ee","#8fb8d8"],doree:["#f7c948","#e3a72f"]}[type]||["#9cc3e0","#7fa8c9"];
+  let g=`<ellipse cx="0" cy="6" rx="17" ry="3" fill="#3a2a1e" opacity=".2" filter="url(#soft)"/>`;
+  if(type==="poisson")g+=`<path d="M12 0l9 -6v12z" fill="${B[0]}" ${st}/>`;
+  g+=`<path d="M-15 -4L-12 5Q0 8 12 5L15 -4Z" fill="${B[0]}" ${st}/><ellipse cx="0" cy="-4" rx="15" ry="4" fill="${B[1]}" ${st}/>`;
+  if(level>0){const h=(level*3.2).toFixed(1);
+    if(food==="pate")g+=`<ellipse cx="0" cy="${(-4-level*1.6).toFixed(1)}" rx="${(8+level*4).toFixed(1)}" ry="${(1.6+level*2.2).toFixed(1)}" fill="#c9806a" stroke="${OUT}" stroke-width="1"/><path d="M-4 ${(-5-level*2).toFixed(1)}q2 -1 4 0" stroke="#e5a690" stroke-width="1.2" fill="none"/>`;
+    else{let k="";const n=Math.max(2,Math.round(level*11));for(let i=0;i<n;i++){const x=-10+((i*7)%21),y=-4-((i*3)%4)*level*.9;k+=`<circle cx="${x}" cy="${y.toFixed(1)}" r="2" fill="${i%2?"#b5794b":"#9a6239"}" stroke="${OUT}" stroke-width=".6"/>`;}g+=k;}}
+  if(type==="fleur")g+=[-8,0,8].map(x=>`<circle cx="${x}" cy="1.5" r="1.6" fill="#f7a8c0"/>`).join("");
+  if(type==="poisson")g+=`<circle cx="-9" cy="1" r="1" fill="${OUT}"/>`;
+  if(type==="doree")g+=`<path d="M-11 0q11 4 22 0" stroke="#fff6d6" stroke-width="1.2" fill="none" opacity=".8"/>`;
+  if(type==="basique")g+=`<text x="0" y="3.4" text-anchor="middle" font-family="Nunito,sans-serif" font-size="5" font-weight="800" fill="#fffaf2">MIAOU</text>`;
+  return g;
+}
+function catSVG(c,awake){
+  const C=COATS[c.coat]||COATS.roux,pt=C.pattern==="points"?C.stripe:C.body;
+  if(!awake){ // roulé en boule, il dort
+    let g=`<ellipse cx="2" cy="10" rx="30" ry="5" fill="#3a2a1e" opacity=".22" filter="url(#soft)"/>
+    <path d="M-26 6q-6 -18 14 -22q20 -4 34 6q10 8 4 18q-4 6 -22 6q-24 0 -30 -8z" fill="${C.body}" ${st}/>`;
+    if(C.pattern==="stripes")g+=`<path d="M-6 -14q2 8 -2 18M6 -14q2 8 -1 18M16 -10q2 8 -2 16" stroke="${C.stripe}" stroke-width="2.2" stroke-linecap="round" fill="none"/>`;
+    if(C.pattern==="patches")g+=`<path d="M-4 -15q10 -2 14 4q-6 8 -16 4z" fill="#f5b26b"/><path d="M10 -6q10 0 12 8q-8 4 -14 -2z" fill="#4d4350"/>`;
+    g+=`<path d="M24 10q8 4 2 10q-10 6 -38 4" fill="none" stroke="${OUT}" stroke-width="5.6" stroke-linecap="round"/><path d="M24 10q8 4 2 10q-10 6 -38 4" fill="none" stroke="${pt}" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="-22" cy="4" rx="14" ry="11" fill="${C.body}" ${st}/>`;
+    if(C.pattern==="points")g+=`<ellipse cx="-22" cy="7" rx="8" ry="6" fill="${pt}" opacity=".85"/>`;
+    if(C.pattern==="patches")g+=`<path d="M-34 -2q4 -8 12 -6q-2 6 -12 6z" fill="#f5b26b"/>`;
+    g+=`<path d="M-33 -3l-2 -11l9 6zM-17 -6l5 -10l3 11z" fill="${pt}" ${st}/><path d="M-32 -6l-1 -5l4 3zM-15 -8l3 -5l1 5z" fill="#f6c7c0"/>
+    <path d="M-29 4q2 2 4 0M-20 4q2 2 4 0" fill="none" stroke="${c.coat==="noir"?"#d9cfe0":OUT}" stroke-width="1.3" stroke-linecap="round"/><path d="M-23.5 7.5l1.5 1.2l1.5 -1.2" fill="#e98b8b" stroke="${OUT}" stroke-width=".8"/>
+    <ellipse cx="-12" cy="14" rx="5" ry="3.4" fill="${C.paw}" ${st}/><ellipse cx="-2" cy="15" rx="5" ry="3.4" fill="${C.paw}" ${st}/>
+    <text x="10" y="-14" font-family="Gaegu,cursive" font-size="9" fill="${OUT}" opacity=".6">z</text><text x="16" y="-22" font-family="Gaegu,cursive" font-size="7" fill="${OUT}" opacity=".5">z</text>`;
+    return g;}
+  // assis, il attend son repas en regardant la gamelle
+  let g=`<ellipse cx="0" cy="14" rx="18" ry="4" fill="#3a2a1e" opacity=".22" filter="url(#soft)"/>
+  <path d="M12 12q16 2 14 -14q-1 -6 4 -8" fill="none" stroke="${OUT}" stroke-width="5.6" stroke-linecap="round"/><path d="M12 12q16 2 14 -14q-1 -6 4 -8" fill="none" stroke="${pt}" stroke-width="3" stroke-linecap="round"/>
+  <path d="M-14 12q-4 -26 12 -30q16 4 14 30z" fill="${C.body}" ${st}/>`;
+  if(C.pattern==="stripes")g+=`<path d="M4 -10q4 3 6 0M5 -3q4 3 7 0M6 4q3 2 6 0" stroke="${C.stripe}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  if(C.pattern==="patches")g+=`<path d="M2 -14q8 2 9 10q-6 2 -10 -4z" fill="#4d4350"/><path d="M-12 2q4 -6 10 -2q-2 8 -10 6z" fill="#f5b26b"/>`;
+  g+=`<ellipse cx="-7" cy="12" rx="4.6" ry="3" fill="${C.paw}" ${st}/><ellipse cx="3" cy="12" rx="4.6" ry="3" fill="${C.paw}" ${st}/>
+  <circle cx="-8" cy="-24" r="12" fill="${C.body}" ${st}/>`;
+  if(C.pattern==="points")g+=`<ellipse cx="-9" cy="-20" rx="7" ry="6" fill="${pt}" opacity=".85"/>`;
+  if(C.pattern==="patches")g+=`<path d="M-20 -26q2 -10 10 -10q-2 8 -10 10z" fill="#f5b26b"/>`;
+  g+=`<path d="M-19 -30l-2 -11l8 5zM-2 -33l5 -9l2 11z" fill="${pt}" ${st}/><path d="M-18 -32l-1 -5l4 3zM0 -35l3 -4l1 5z" fill="#f6c7c0"/>
+  <ellipse cx="-13" cy="-24" rx="1.8" ry="2.4" fill="${c.coat==="noir"?"#f7c948":OUT}"/><ellipse cx="-4" cy="-24" rx="1.8" ry="2.4" fill="${c.coat==="noir"?"#f7c948":OUT}"/><circle cx="-12.4" cy="-25" r=".6" fill="#fff"/><circle cx="-3.4" cy="-25" r=".6" fill="#fff"/>
+  <path d="M-9.5 -20l1.2 1l1.2 -1" fill="#e98b8b" stroke="${OUT}" stroke-width=".8"/><path d="M-10 -18q1.2 1.2 1.7 0q.5 1.2 1.7 0" stroke="${OUT}" stroke-width=".8" fill="none"/>
+  <path d="M-22 -20h-6M-22 -18l-5 2M5 -20h6M5 -18l5 2" stroke="${OUT}" stroke-width=".6" opacity=".6"/>`;
+  return g;
+}
+function catScene(c,FLOOR){
+  const lvl=c.bowl.filledAt?Math.max(0,1-(Date.now()-c.bowl.filledAt)/FOOD_MS):0, hungry=lvl<=0;
+  const bowl=`<g transform="translate(30 ${FLOOR+44})" filter="url(#rough)">${bowlSVG(c.bowlType,c.bowl.food,lvl)}</g>`;
+  const cat=hungry?`<g transform="translate(58 ${FLOOR+40})" filter="url(#rough)">${catSVG(c,true)}</g>`
+                  :`<g transform="translate(66 ${FLOOR+38})" filter="url(#rough)">${catSVG(c,false)}</g>`;
+  return bowl+cat;
 }
 
 /* ===================== Chambre : pauses ===================== */
@@ -767,7 +843,9 @@ function goldBtn(key,gid,label,on){
 }
 function isTrying(key){if(!preview)return false;const [slot,k]=key.split(":");
   if(slot==="tint")return preview.char&&preview.char.tint===k;if(slot==="deco")return preview.shown&&preview.shown[k];
-  if(slot==="theme")return preview.theme===k;return preview.char&&preview.char[slot]===k;}
+  if(slot==="theme")return preview.theme===k;
+  if(slot==="coat")return !!(preview.cat&&preview.cat.coat===k);if(slot==="bowl")return !!(preview.cat&&preview.cat.bowlType===k);
+  if(slot==="food")return !!(preview.cat&&preview.cat.bowl);return !!(preview.char&&preview.char[slot]===k);}
 function renderWardrobe(){
   setHTML($("avatar"),`<svg viewBox="-62 -58 124 100" xmlns="http://www.w3.org/2000/svg"><defs><filter id="rough2"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="1.6"/></filter></defs><g filter="url(#rough2)">${charSVG(CH(),false)}</g></svg>`);
   const c=CH();
@@ -796,6 +874,10 @@ function tryGold(key,gid){
   if(state.owned[gid]){ // déjà acheté : se porte comme les autres
     if(slot==="deco")state.shown[k]=!state.shown[k];else if(slot==="theme")state.theme=k;else if(slot==="tint")state.char.tint=k;else state.char[slot]=state.char[slot]===k?null:k;
     save();render();return;}
+  if(slot==="coat"||slot==="bowl"||slot==="food"){
+    if(isTrying(key)){preview=null;render();return;}
+    preview={cat:slot==="coat"?{coat:k}:slot==="bowl"?{bowlType:k}:{bowl:{food:"pate",filledAt:Date.now()}}};
+    if(!state.shown.chaton)preview.shown={chaton:true};render();return;}
   if(isTrying(key)){preview=null;}
   else if(slot==="deco")preview={shown:{[k]:true}};
   else if(slot==="theme")preview={theme:k};
@@ -804,11 +886,39 @@ function tryGold(key,gid){
 }
 function renderGoldBar(){
   const bar=$("goldbar");if(!preview){bar.hidden=true;return;}
-  const key=preview.theme?preview.theme:preview.shown?Object.keys(preview.shown)[0]:Object.entries(preview.char).map(([s,k])=>s==="tint"?"tint-"+k:s+"-"+k)[0];
+  const key=preview.cat?(preview.cat.coat?"coat-"+preview.cat.coat:preview.cat.bowlType?"bowl-"+preview.cat.bowlType:"food-pate")
+    :preview.theme?preview.theme:preview.shown?Object.keys(preview.shown)[0]:Object.entries(preview.char).map(([s,k])=>s==="tint"?"tint-"+k:s+"-"+k)[0];
   const g=GOLDEN[key];bar.hidden=false;
   $("goldname").textContent=`${g.name} · ${g.price}`;
 }
 $("goldclose").onclick=()=>{preview=null;render();};
+
+/* ===================== Mon chat ===================== */
+function renderCat(){
+  const box=$("catPanel");
+  if(!state.owned.chaton){setHTML(box,`<div class="catbox"><h2>Mon chat</h2><p class="note">Adopte le chaton (12 rayons, juste au-dessus) pour choisir son pelage, sa gamelle et lui donner à manger.</p></div>`);return;}
+  const c=CAT(),lvl=foodLevel(),pct=Math.round(lvl*100),hrs=Math.floor(lvl*12),mins=Math.round((lvl*12-hrs)*60);
+  const coat=Object.entries(COATS).map(([k,v])=>v.gold&&!state.owned["coat-"+k]?goldBtn("coat:"+k,"coat-"+k,v.name,c.coat===k&&!isTrying("coat:"+k))
+    :`<button class="opt" data-cat="coat:${k}" aria-pressed="${state.cat.coat===k}">${v.name}<small>${state.cat.coat===k?"Choisi":"À toi"}</small></button>`).join("");
+  const bowl=Object.entries(BOWLS).map(([k,v])=>v.gold&&!state.owned["bowl-"+k]?goldBtn("bowl:"+k,"bowl-"+k,v.name,false)
+    :`<button class="opt" data-cat="bowl:${k}" aria-pressed="${state.cat.bowlType===k}">${v.name}<small>${state.cat.bowlType===k?"Choisie":"À toi"}</small></button>`).join("");
+  const food=`<button class="opt" data-feed="croquettes" ${state.rays<FOODS.croquettes.cost?"disabled":""}>Croquettes<small>${FOODS.croquettes.cost} rayons</small></button>`
+    +(state.owned["food-pate"]?`<button class="opt" data-feed="pate">Pâté gourmet<small>À toi</small></button>`:goldBtn("food:pate","food-pate","Pâté gourmet",false));
+  setHTML(box,`<div class="catbox"><h2>Mon chat</h2>
+    <div><h3>Gamelle</h3><div class="catrow"><div style="flex:1 1 180px"><div class="foodbar"><i style="width:${pct}%"></i></div></div>
+      <p class="note">${lvl>0?`${state.cat.bowl.food==="pate"?"Pâté":"Croquettes"} : encore ${hrs?hrs+" h ":""}${mins} min environ`:"Ta gamelle est vide : ton chat attend son repas."}</p></div></div>
+    <div><h3>Lui donner à manger</h3><div class="opts">${food}</div></div>
+    <div><h3>Pelage</h3><div class="opts">${coat}</div></div>
+    <div><h3>Type de gamelle</h3><div class="opts">${bowl}</div></div></div>`);
+}
+$("catPanel").onclick=e=>{
+  const g=e.target.closest("button[data-g]");if(g){tryGold(g.dataset.g,g.dataset.gid);return;}
+  const f=e.target.closest("button[data-feed]");
+  if(f){const k=f.dataset.feed;if(k==="croquettes"){if(state.rays<FOODS.croquettes.cost)return;state.rays-=FOODS.croquettes.cost;}
+    state.cat.bowl={food:k,filledAt:Date.now()};preview=null;save();say(k==="pate"?"Miam, du pâté ! Ton chat est aux anges.":"Gamelle remplie : ton chat va pouvoir faire une bonne sieste.","ok");render();return;}
+  const b=e.target.closest("button[data-cat]");if(!b)return;const [slot,k]=b.dataset.cat.split(":");
+  if(slot==="coat")state.cat.coat=k;else state.cat.bowlType=k;preview=null;save();render();
+};
 
 /* ===================== Déco ===================== */
 function renderShop(){
@@ -892,7 +1002,7 @@ function render(){
   setHTML($("scene"),room(work));
   const p=phase(),n=state.char.name||"Ton petit soleil";
   $("caption").textContent=work?`${n} travaille avec toi. C'est ${p.label}.`:`C'est ${p.label}. ${n} t'attend dans ta chambre.`;
-  renderWeather();renderRhythm();renderGoldBar();renderApps();renderFocus();renderWardrobe();renderShop();renderLock();
+  renderWeather();renderRhythm();renderGoldBar();renderCat();renderApps();renderFocus();renderWardrobe();renderShop();renderLock();
 }
 function renderNative(){
   if(!AND)return;$("nativeBox").hidden=false;let on=false;try{on=AND.isEnabled();}catch(e){}
