@@ -500,12 +500,13 @@ function room(work){
     const rings=[2,10,18,26].map(v=>`<circle cx="${X-15+v}" cy="${top}" r="2" fill="none" stroke="${OUT}" stroke-width="1"/><circle cx="${X+WB.w+15-v}" cy="${top}" r="2" fill="none" stroke="${OUT}" stroke-width="1"/>`).join("");
     return rod+[L1,R1].map(d=>`<path d="${d}" fill="url(#plaid)" ${st}/><path d="${d}" fill="url(#fold)"/>`).join("")
       +`<path d="${folds(X-15,1)}${folds(X+WB.w+15,-1)}" stroke="${OUT}" stroke-width=".9" opacity=".35" fill="none"/>`+tie(X-15,1)+tie(X+WB.w+15,-1)+rings;})()}`;
-  const GD="M10 10Q200 62 390 10", gpt=i=>{const t=i/14,u=1-t;return[u*u*10+2*u*t*200+t*t*390,u*u*10+2*u*t*62+t*t*10];};
-  if(sh.guirlande&&night)lights+=`<path d="${GD}M10 10Q200 34 390 10" fill="none" stroke="#ffe28a" stroke-width="10" opacity=".35" filter="url(#bigglow)"/>`;
+  const GD="M10 10Q200 62 390 10", GD2="M10 10Q118 58 236 6Q316 30 390 10", gpt=i=>{const t=i/14,u=1-t;return[u*u*10+2*u*t*200+t*t*390,u*u*10+2*u*t*62+t*t*10];};
+  if(sh.guirlande&&night)lights+=`<path d="${GD}${GD2}" fill="none" stroke="#ffe28a" stroke-width="10" opacity=".35" filter="url(#bigglow)"/>`;
   if(sh.guirlande){
     const star=(x,y,c)=>`<circle cx="${x.toFixed(1)}" cy="${(y+5).toFixed(1)}" r="6" fill="${c}" opacity=".45" filter="url(#glow)"/><path transform="translate(${x.toFixed(1)} ${(y+5).toFixed(1)}) scale(.9)" d="M0 -6l1.8 3.8l4.2 .6l-3 3l.7 4.2l-3.7 -2l-3.7 2l.7 -4.2l-3 -3l4.2 -.6z" fill="${c}" stroke="${OUT}" stroke-width="1"/>`;
-    const GD2="M10 10Q200 34 390 10", gpt2=i=>{const t=i/16,u=1-t;return[u*u*10+2*u*t*200+t*t*390,u*u*10+2*u*t*34+t*t*10];};
-    s+=`<path d="${GD2}" fill="none" stroke="${OUT}" stroke-width="1.1"/>`+Array.from({length:15},(_,i)=>gpt2(i+1)).map(([x,y],i)=>star(x,y-1,i%2?"#fff6d6":"#ffd56b")).join("");
+    // deuxième guirlande : un clou en plus au milieu, deux arrondis de taille différente
+    const q=(x0,y0,cx,cy,x1,y1,n)=>Array.from({length:n},(_,i)=>{const t=(i+1)/(n+1),u=1-t;return[u*u*x0+2*u*t*cx+t*t*x1,u*u*y0+2*u*t*cy+t*t*y1];});
+    s+=`<path d="${GD2}" fill="none" stroke="${OUT}" stroke-width="1.1"/>`+[...q(10,10,118,58,236,6,9),...q(236,6,316,30,390,10,5)].map(([x,y],i)=>star(x,y-1,i%2?"#fff6d6":"#ffd56b")).join("")+`<circle cx="236" cy="6" r="2.8" fill="#c9b6a6" ${st}/>`;
     s+=`<path d="${GD}" fill="none" stroke="${OUT}" stroke-width="1.2"/>`+Array.from({length:13},(_,i)=>gpt(i+1)).map(([x,y])=>star(x,y,"#ffe28a")).join("");
     s+=[[10,10],[390,10]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.8" fill="#c9b6a6" ${st}/>`).join("");}
   if(sh.horloge)s+=`<circle cx="166" cy="62" r="20" fill="#9fc0a8" ${st}/><circle cx="166" cy="62" r="15" fill="#fffaf2" ${st}/>${(()=>{const d=new Date(),h=(d.getHours()%12+d.getMinutes()/60)*30,m=d.getMinutes()*6,r=a=>a*Math.PI/180;let ticks="";for(let i=0;i<12;i++){const a=r(i*30);ticks+=`M${(166+Math.sin(a)*11.5).toFixed(1)} ${(62-Math.cos(a)*11.5).toFixed(1)}L${(166+Math.sin(a)*13.5).toFixed(1)} ${(62-Math.cos(a)*13.5).toFixed(1)}`;}return `<path d="${ticks}" stroke="${OUT}" stroke-width="1"/><path d="M166 62L${(166+Math.sin(r(h))*7).toFixed(1)} ${(62-Math.cos(r(h))*7).toFixed(1)}M166 62L${(166+Math.sin(r(m))*11).toFixed(1)} ${(62-Math.cos(r(m))*11).toFixed(1)}" ${st}/>`;})()}`;
