@@ -106,9 +106,16 @@ fieldset legend{padding:0 6px}
 .opt{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 12px;border:2px solid var(--line);background:transparent;border-radius:14px;font-size:.88rem;min-width:84px}
 .opt small{font-weight:600;color:var(--muted);font-size:.75rem}
 .opt[aria-pressed="true"]{border-color:var(--sun);background:var(--sun-soft)}
-.avatar{background:var(--sun-soft);border-radius:20px;border:2px solid var(--line);display:grid;place-items:center}
+.avatar{position:sticky;top:calc(8px + env(safe-area-inset-top,0px));z-index:2;background:var(--sun-soft);border-radius:20px;border:2px solid var(--line);display:grid;place-items:center}
 .avatar svg{width:min(220px,60vw);height:auto;display:block}
 .namefield{display:flex;gap:8px}
+.opt.gold,.deco.gold{border-color:#e9b949;background:linear-gradient(160deg,color-mix(in srgb,#f7c948 16%,transparent),transparent 60%)}
+.opt.gold[aria-pressed="true"],.deco.gold.on{border-color:#d99a1a;box-shadow:0 0 0 2px color-mix(in srgb,#f7c948 45%,transparent)}
+.goldbar{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:6;display:flex;align-items:center;gap:12px;
+  margin:0 auto;max-width:500px;width:calc(100% - 24px);padding:10px 12px 10px 16px;border-radius:18px;border:2px solid #d99a1a;background:var(--card);box-shadow:0 6px 18px -8px rgba(60,40,20,.4)}
+.goldbar div{flex:1;min-width:0;display:flex;flex-direction:column;font-size:.85rem;line-height:1.3}
+.goldbar strong{font-size:.95rem}
+.goldbar span{color:var(--muted)}
 .tabs{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);border-top:2px solid var(--line);
   padding:6px max(8px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-right,0px));z-index:5}
 .tabs div{max-width:500px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
@@ -198,6 +205,7 @@ fieldset legend{padding:0 6px}
   <!-- Perso -->
   <section class="panel" data-tab="perso" aria-labelledby="p-title" hidden>
     <h2 id="p-title">Mon petit soleil</h2>
+    <p class="note">Les accessoires avec une couronne font partie de la collection <b>Golden</b>, bientôt disponible. Touche-les pour les essayer.</p>
     <div class="avatar" id="avatar"></div>
     <div class="namefield">
       <label class="sr" for="charName" hidden>Prénom</label>
@@ -209,6 +217,7 @@ fieldset legend{padding:0 6px}
   <!-- Déco -->
   <section class="panel" data-tab="deco" aria-labelledby="d-title" hidden>
     <h2 id="d-title">Décorer ma chambre</h2>
+    <p class="note">Les objets marqués d'une couronne font partie de la collection <b>Golden</b>, bientôt disponible. Tu peux déjà les essayer.</p>
     <div class="shop" id="shop"></div>
     <h2>Ambiance</h2>
     <div class="opts" id="themes"></div>
@@ -233,6 +242,10 @@ fieldset legend{padding:0 6px}
   </section>
 </main>
 
+<div class="goldbar" id="goldbar" role="status" hidden>
+  <div><strong>Aperçu Golden ✦ <span id="goldname"></span></strong><span>Bientôt disponible à l'achat</span></div>
+  <button class="ghost small" id="goldclose">Retirer</button>
+</div>
 <nav class="tabs" aria-label="Sections"><div role="tablist">
   <button role="tab" data-go="chambre" aria-selected="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9H3z"/><path d="M10 20v-5h4v5"/></svg>Chambre</button>
   <button role="tab" data-go="focus" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg>Focus</button>
@@ -271,28 +284,49 @@ const DECO=[
   {id:"posters",name:"Notes et polaroïds",cost:3},{id:"tableau",name:"Petits cadres",cost:4},{id:"horloge",name:"Horloge",cost:4},
   {id:"guirlande",name:"Guirlande étoiles",cost:5},{id:"guirlandefen",name:"Guirlande fenêtre",cost:4},{id:"fanions",name:"Fanions au-dessus du bureau",cost:4},{id:"guirlandebib",name:"Guirlande bibliothèque",cost:4},{id:"etagere",name:"Étagère plantes et radio",cost:6},{id:"pouf",name:"Pouf",cost:5},
   {id:"monstera",name:"Grande plante",cost:6},{id:"tapisdoux",name:"Tapis à carreaux",cost:7},{id:"lampadaire",name:"Lampadaire",cost:7},
-  {id:"bibliotheque",name:"Bibliothèque",cost:10},{id:"platine",name:"Platine vinyle (bibliothèque)",cost:8},{id:"chaton",name:"Chaton",cost:12}
+  {id:"bibliotheque",name:"Bibliothèque",cost:10},{id:"platine",name:"Platine vinyle (bibliothèque)",cost:8},{id:"chaton",name:"Chaton",cost:12},
+  {id:"sapin",name:"Petit sapin lumineux",gold:true},{id:"aquarium",name:"Bocal à poisson",gold:true},
+  {id:"veilleuse",name:"Veilleuse lune",gold:true},{id:"papillons",name:"Papillons en papier",gold:true}
 ];
 const THEMES={
   creme:{name:"Crème",cost:0,wall:"#f3e4cf",wall2:"#ecd7bb",floor:"#d9a877",floor2:"#c48f5f",wood:"#b97f52"},
   peche:{name:"Pêche",cost:4,wall:"#f8d9c8",wall2:"#f1c8b2",floor:"#d6a27a",floor2:"#c08a62",wood:"#b07a52"},
   sauge:{name:"Sauge",cost:4,wall:"#dfe6cf",wall2:"#cfd9bb",floor:"#cfa77f",floor2:"#b98f66",wood:"#a77b55"},
-  lavande:{name:"Lavande",cost:4,wall:"#e3dbef",wall2:"#d4c9e5",floor:"#c99e7b",floor2:"#b38763",wood:"#a2765a"}
+  lavande:{name:"Lavande",cost:4,wall:"#e3dbef",wall2:"#d4c9e5",floor:"#c99e7b",floor2:"#b38763",wood:"#a2765a"},
+  moutarde:{name:"Moutarde",cost:0,gold:true,wall:"#e6b75c",wall2:"#dcaa4e",floor:"#b98a5e",floor2:"#a47750",wood:"#9c6b45"},
+  minuit:{name:"Minuit",cost:0,gold:true,wall:"#4a4874",wall2:"#3d3b63",floor:"#8a6a55",floor2:"#765847",wood:"#7a5a44"}
 };
-const TINTS={soleil:{name:"Soleil",cost:0,body:"#ffd54f",mane:"#ffb547"},dore:{name:"Doré",cost:3,body:"#f6c453",mane:"#e3923a"},
+const TINTS={lune:{name:"Clair de lune",cost:0,gold:true,body:"#f4ecd8",mane:"#c9c2e8"},soleil:{name:"Soleil",cost:0,body:"#ffd54f",mane:"#ffb547"},dore:{name:"Doré",cost:3,body:"#f6c453",mane:"#e3923a"},
   peche:{name:"Pêche",cost:3,body:"#ffc8a2",mane:"#f59a7a"},citron:{name:"Citron",cost:3,body:"#fff07a",mane:"#f2cc45"}};
+/* Collection Golden : objets payants, purement esthétiques (bientôt disponibles) */
+const GOLDEN={
+  "tint-lune":{name:"Clair de lune",price:"1,49 €",kind:"wear"},
+  "hat-couronne":{name:"Couronne dorée",price:"1,99 €",kind:"wear"},
+  "glasses-etoiles":{name:"Lunettes étoiles",price:"0,99 €",kind:"wear"},
+  "neck-collier":{name:"Collier de perles",price:"0,99 €",kind:"wear"},
+  "back-ailes":{name:"Ailes de papillon",price:"2,99 €",kind:"wear"},
+  "sapin":{name:"Petit sapin lumineux",price:"1,99 €",kind:"deco"},
+  "aquarium":{name:"Bocal à poisson",price:"1,49 €",kind:"deco"},
+  "veilleuse":{name:"Veilleuse lune",price:"0,99 €",kind:"deco"},
+  "papillons":{name:"Papillons en papier",price:"0,99 €",kind:"deco"},
+  "moutarde":{name:"Moutarde",price:"1,49 €",kind:"theme"},
+  "minuit":{name:"Minuit",price:"1,49 €",kind:"theme"}
+};
+const isGolden=id=>!!GOLDEN[id];
+const GOLD_WEAR={hat:{couronne:"Couronne dorée"},glasses:{etoiles:"Lunettes étoiles"},neck:{collier:"Collier de perles"},back:{ailes:"Ailes de papillon"}};
 const WARDROBE=[
   {slot:"hair",label:"Cheveux",items:{meche:["Mèche",3],frange:["Frange",4],chignon:["Chignon",5],boucles:["Boucles",6]}},
   {slot:"glasses",label:"Lunettes",items:{rondes:["Rondes",3],soleil:["De soleil",4],coeur:["Cœur",5]}},
   {slot:"hat",label:"Chapeau",items:{bonnet:["Bonnet",4],casquette:["Casquette",4],bob:["Bob",5],fleurs:["Couronne de fleurs",6]}},
   {slot:"neck",label:"Au cou",items:{noeud:["Nœud",3],echarpe:["Écharpe",4],foulard:["Foulard",4]}},
-  {slot:"ears",label:"Sur les oreilles",items:{casque:["Casque audio",6]}}
+  {slot:"ears",label:"Sur les oreilles",items:{casque:["Casque audio",6]}},
+  {slot:"back",label:"Dans le dos",items:{}}
 ];
 
 /* ===================== État ===================== */
 let state={daily:RULES.daily, nextDaily:null, pauses:RULES.daily, day:today(), unlocks:{}, focus:null, workDay:today(), workMs:0, blocks:0, hard:{}, custom:[],
   rays:5, owned:{creme:true,"tint-soleil":true}, shown:{}, theme:"creme",
-  char:{name:"Soleil",tint:"soleil",hair:null,glasses:null,hat:null,neck:null,ears:null}};
+  char:{name:"Soleil",tint:"soleil",hair:null,glasses:null,hat:null,neck:null,ears:null,back:null}};
 (function load(){
   try{
     const s=JSON.parse(localStorage.getItem("sunrise2"));
@@ -310,6 +344,10 @@ function syncNative(){if(!AND)return;try{
   const extra=state.custom.filter(id=>id.startsWith("pkg:")).map(id=>({id,name:nameOf(id),pkgs:[id.slice(4)],managed:false}));
   AND.sync(JSON.stringify({unlocks:state.unlocks,hard:state.hard,custom:state.custom,
   apps:[...APPS.filter(a=>a.id!=="phone").map(a=>({id:a.id,name:a.name,pkgs:a.pkgs,managed:true})),...extra]}));}catch(e){}}
+let preview=null; // {char:{…}} ou {shown:{…}} ou {theme} : essai d'un objet Golden, jamais enregistré
+const CH=()=>preview&&preview.char?Object.assign({},state.char,preview.char):state.char;
+const SH=()=>preview&&preview.shown?Object.assign({},state.shown,preview.shown):state.shown;
+const TH=()=>preview&&preview.theme?preview.theme:state.theme;
 function save(){try{localStorage.setItem("sunrise2",JSON.stringify(state));}catch(e){}syncNative();}
 const $=id=>document.getElementById(id);
 const setHTML=(el,h)=>{if(el._h!==h){el._h=h;el.innerHTML=h;}};
@@ -376,6 +414,7 @@ function renderWeather(){
 const OUT="#5b4636", SW=1.9;
 const st=`stroke="${OUT}" stroke-width="${SW}" stroke-linejoin="round" stroke-linecap="round"`;
 const BODY="M0 -25A25 25 0 1 1 0 25A25 25 0 1 1 0 -25Z";
+const WINGS=`<g opacity=".95"><path d="M-14 -4C-40 -34 -62 -18 -50 2C-60 14 -46 30 -20 14Z" fill="#c9b6ef" stroke="${OUT}" stroke-width="1.9" stroke-linejoin="round"/><path d="M14 -4C40 -34 62 -18 50 2C60 14 46 30 20 14Z" fill="#c9b6ef" stroke="${OUT}" stroke-width="1.9" stroke-linejoin="round"/><path d="M-22 -2C-36 -18 -48 -12 -42 0M22 -2C36 -18 48 -12 42 0" fill="none" stroke="#fff" stroke-width="1.4" opacity=".7"/><circle cx="-44" cy="-10" r="2.6" fill="#f7a8c0"/><circle cx="44" cy="-10" r="2.6" fill="#f7a8c0"/><circle cx="-38" cy="14" r="2" fill="#fff6d6"/><circle cx="38" cy="14" r="2" fill="#fff6d6"/></g>`;
 function sunRays(t){
   let g=[46,40,34].map((r,i)=>`<circle r="${r}" fill="${t.mane}" opacity="${[.1,.14,.18][i]}"/>`).join("");
   let d="";for(let i=0;i<12;i++){if(i>=5&&i<=7)continue;const a=(i*30-90)*Math.PI/180,r1=31,r2=i%2?37:41;d+=`M${(Math.cos(a)*r1).toFixed(1)} ${(Math.sin(a)*r1).toFixed(1)}L${(Math.cos(a)*r2).toFixed(1)} ${(Math.sin(a)*r2).toFixed(1)}`;}
@@ -386,6 +425,7 @@ function charSVG(c,work){
   const m=sunRays(t);
   let g=`<g class="breathe"><ellipse cx="0" cy="36" rx="22" ry="4" fill="${OUT}" opacity=".12"/>${m}`;
   g+=`<ellipse cx="-9" cy="31" rx="6.5" ry="4.2" fill="${t.body}" ${st}/><ellipse cx="9" cy="31" rx="6.5" ry="4.2" fill="${t.body}" ${st}/>`;
+  if(c.back==="ailes")g+=WINGS;
   g+=`<path d="${BODY}" fill="${t.body}" ${st}/>`;
   g+=`<path d="M-15 -14q6 -7 14 -8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".55"/>`;
   g+=`<ellipse cx="-13" cy="7" rx="4.2" ry="2.6" fill="#f3998b" opacity=".6"/><ellipse cx="13" cy="7" rx="4.2" ry="2.6" fill="#f3998b" opacity=".6"/>`;
@@ -402,13 +442,15 @@ function charSVG(c,work){
   const G={
     rondes:`<circle cx="-8" cy="0" r="6.5" fill="#fff" fill-opacity=".3" ${st}/><circle cx="8" cy="0" r="6.5" fill="#fff" fill-opacity=".3" ${st}/><path d="M-1.5 -1h3" ${st}/>`,
     soleil:`<rect x="-16" y="-6" width="13" height="10" rx="4" fill="#3d3550" ${st}/><rect x="3" y="-6" width="13" height="10" rx="4" fill="#3d3550" ${st}/><path d="M-3 -2h6" ${st}/><path d="M-13 -4h3" stroke="#fff" stroke-width="1.4" opacity=".6"/>`,
-    coeur:`<path d="M-8 6l-6 -6a3.6 3.6 0 0 1 6 -3.6a3.6 3.6 0 0 1 6 3.6z" fill="#f47b9b" ${st}/><path d="M8 6l-6 -6a3.6 3.6 0 0 1 6 -3.6a3.6 3.6 0 0 1 6 3.6z" fill="#f47b9b" ${st}/><path d="M-2 -1h4" ${st}/>`
+    coeur:`<path d="M-8 6l-6 -6a3.6 3.6 0 0 1 6 -3.6a3.6 3.6 0 0 1 6 3.6z" fill="#f47b9b" ${st}/><path d="M8 6l-6 -6a3.6 3.6 0 0 1 6 -3.6a3.6 3.6 0 0 1 6 3.6z" fill="#f47b9b" ${st}/><path d="M-2 -1h4" ${st}/>`,
+    etoiles:[-8,8].map(x=>`<path transform="translate(${x} 0)" d="M0 -8l2.4 5l5.4 .8l-3.9 3.8l.9 5.4l-4.8 -2.5l-4.8 2.5l.9 -5.4l-3.9 -3.8l5.4 -.8z" fill="#f7c948" ${st}/>`).join("")+`<path d="M-1 -1h2" ${st}/><circle cx="-8" cy="0" r="1.6" fill="${OUT}"/><circle cx="8" cy="0" r="1.6" fill="${OUT}"/>`
   };
   if(c.glasses)g+=G[c.glasses]||"";
   const HT={
     bonnet:`<path d="M-21 -14q2 -22 21 -22q19 0 21 22z" fill="#e98b8b" ${st}/><rect x="-23" y="-18" width="46" height="8" rx="4" fill="#f5b0a8" ${st}/><circle cy="-39" r="5.5" fill="#fff4ea" ${st}/>`,
     casquette:`<path d="M-20 -15q2 -19 20 -19q18 0 20 19z" fill="#7fa8c9" ${st}/><path d="M13 -16q18 -2 24 4q-11 3 -24 2z" fill="#7fa8c9" ${st}/><circle cy="-34" r="2.2" fill="${OUT}"/>`,
     bob:`<ellipse cy="-16" rx="31" ry="6.5" fill="#9cbf86" ${st}/><path d="M-18 -17q1 -18 18 -18q17 0 18 18z" fill="#9cbf86" ${st}/>`,
+    couronne:`<path d="M-16 -20L-18 -38L-8 -29L0 -42L8 -29L18 -38L16 -20Z" fill="#f7c948" ${st}/><path d="M-16 -20H16" stroke="${OUT}" stroke-width="1.9"/><path d="M-15 -24H15" stroke="#e3a72f" stroke-width="2"/><circle cy="-31" r="2.6" fill="#e8657a" ${st}/><circle cx="-11" cy="-27" r="1.8" fill="#7fa8c9" ${st}/><circle cx="11" cy="-27" r="1.8" fill="#9fc58a" ${st}/><path d="M-6 -36l2 -2" stroke="#fff" stroke-width="1.2" opacity=".8"/>`,
     fleurs:[-18,-9,0,9,18].map((x,i)=>{const y=-23-(x===0?7:Math.abs(x)===9?4:0),col=["#f7a8c0","#fff4ea","#f7c948","#fff4ea","#f7a8c0"][i];
       return `<g transform="translate(${x} ${y})">${[0,72,144,216,288].map(a=>`<circle cx="${(Math.cos(a*Math.PI/180)*3.6).toFixed(1)}" cy="${(Math.sin(a*Math.PI/180)*3.6).toFixed(1)}" r="3" fill="${col}" stroke="${OUT}" stroke-width="1.2"/>`).join("")}<circle r="2.1" fill="#f2a07b"/></g>`;}).join("")
   };
@@ -416,7 +458,8 @@ function charSVG(c,work){
   const N={
     noeud:`<path d="M0 20l-10 -6v12zM0 20l10 -6v12z" fill="#e8657a" ${st}/><circle cy="20" r="2.6" fill="#e8657a" ${st}/>`,
     echarpe:`<path d="M-20 12q20 11 40 0l2 6q-22 11 -44 0z" fill="#d9614e" ${st}/><path d="M11 17l4 14l7 -3l-5 -13z" fill="#d9614e" ${st}/>`,
-    foulard:`<path d="M-17 13q17 8 34 0l-17 16z" fill="#7fa8c9" ${st}/><circle cx="-4" cy="18" r="1.3" fill="#fff"/><circle cx="5" cy="19" r="1.3" fill="#fff"/>`
+    foulard:`<path d="M-17 13q17 8 34 0l-17 16z" fill="#7fa8c9" ${st}/><circle cx="-4" cy="18" r="1.3" fill="#fff"/><circle cx="5" cy="19" r="1.3" fill="#fff"/>`,
+    collier:`<path d="M-15 14q15 10 30 0" fill="none" stroke="${OUT}" stroke-width="1" opacity=".6"/>`+Array.from({length:9},(_,i)=>{const t=i/8,x=-15+30*t,y=14+Math.sin(t*Math.PI)*7.5;return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.3" fill="#fffaf2" stroke="${OUT}" stroke-width="1"/>`;}).join("")+`<circle cy="24" r="3.2" fill="#f7c948" ${st}/>`
   };
   if(c.neck)g+=N[c.neck]||"";
   if(work)g+=`<g transform="translate(0 15)"><path d="M-20 -3l20 4l20 -4v14l-20 4l-20 -4z" fill="#fff6ea" ${st}/><path d="M0 1v14" ${st}/><path d="M-15 3l10 2M-15 7l10 2M5 5l10 -2M5 9l10 -2" stroke="#c9b6a6" stroke-width="1.2"/><ellipse cx="-21" cy="5" rx="4.5" ry="3.6" fill="${t.body}" ${st}/><ellipse cx="21" cy="5" rx="4.5" ry="3.6" fill="${t.body}" ${st}/></g>`;
@@ -428,7 +471,7 @@ function charSVG(c,work){
 function charBack(c){
   const t=TINTS[c.tint]||TINTS.soleil, HAIR="#8a5a3c";
   const m=sunRays(t);
-  let g=`<g class="breathe">${m}<path d="${BODY}" fill="${t.body}" ${st}/>`;
+  let g=`<g class="breathe">${m}${c.back==="ailes"?WINGS:""}<path d="${BODY}" fill="${t.body}" ${st}/>`;
   g+=`<ellipse cx="-24" cy="6" rx="4.5" ry="3.6" fill="${t.body}" ${st}/><ellipse cx="24" cy="6" rx="4.5" ry="3.6" fill="${t.body}" ${st}/>`;
   const H={meche:`<path d="M-2 -25q-7 -12 3 -14q7 0 3 6" fill="${HAIR}" ${st}/>`,
     frange:`<path d="M-22 -2q-2 -26 22 -25q24 -1 22 25q-22 -6 -44 0z" fill="${HAIR}" ${st}/>`,
@@ -438,6 +481,7 @@ function charBack(c){
   if(c.ears==="casque")g+=`<path d="M-24 -1q0 -31 24 -31q24 0 24 31" fill="none" stroke="${OUT}" stroke-width="4.5"/><path d="M-24 -1q0 -31 24 -31q24 0 24 31" fill="none" stroke="#f2a07b" stroke-width="2"/><rect x="-31" y="-7" width="11" height="16" rx="5" fill="#f2a07b" ${st}/><rect x="20" y="-7" width="11" height="16" rx="5" fill="#f2a07b" ${st}/>`;
   const HT={bonnet:`<path d="M-21 -14q2 -22 21 -22q19 0 21 22z" fill="#e98b8b" ${st}/><rect x="-23" y="-18" width="46" height="8" rx="4" fill="#f5b0a8" ${st}/><circle cy="-39" r="5.5" fill="#fff4ea" ${st}/>`,
     casquette:`<path d="M-20 -15q2 -19 20 -19q18 0 20 19z" fill="#7fa8c9" ${st}/><path d="M-6 -15h12v-4h-12z" fill="#fff" ${st}/>`,
+    couronne:`<path d="M-16 -20L-18 -38L-8 -29L0 -42L8 -29L18 -38L16 -20Z" fill="#f7c948" ${st}/><path d="M-15 -24H15" stroke="#e3a72f" stroke-width="2"/>`,
     bob:`<ellipse cy="-16" rx="31" ry="6.5" fill="#9cbf86" ${st}/><path d="M-18 -17q1 -18 18 -18q17 0 18 18z" fill="#9cbf86" ${st}/>`,
     fleurs:[-18,-9,0,9,18].map((x,i)=>`<circle cx="${x}" cy="${-23-(x===0?7:Math.abs(x)===9?4:0)}" r="4" fill="${["#f7a8c0","#fff4ea","#f7c948","#fff4ea","#f7a8c0"][i]}" stroke="${OUT}" stroke-width="1.2"/>`).join("")};
   if(c.hat)g+=HT[c.hat]||"";
@@ -469,7 +513,7 @@ function weatherLayer(night){
   return{back,front};
 }
 function room(work){
-  const p=phase(),t=THEMES[state.theme],sh=state.shown,night=p.key==="nuit",wl=weatherLayer(night),X=WB.x,Y=WB.y;
+  const p=phase(),t=THEMES[TH()],sh=SH(),night=p.key==="nuit",wl=weatherLayer(night),X=WB.x,Y=WB.y;
   const dim=wx&&["cloudy","rain","storm","fog","snow"].includes(wx.kind)?.5:1;
   const nR=Math.max(5,Math.min(12,state.daily||5)),lit=state.daily?Math.round(state.pauses/state.daily*nR):0;
   const rays=Array.from({length:nR},(_,i)=>{const a=(-90+i*360/nR)*Math.PI/180;
@@ -576,6 +620,20 @@ function room(work){
     d+=`M398 92Q404 140 396 190Q402 220 396 ${FLOOR-6}`;[[400,116],[399,140],[398,166],[399,200],[398,222]].forEach(q=>pts.push(q));
     s+=`<path d="${d}" fill="none" stroke="${OUT}" stroke-width="1"/>`;pts.forEach(([x,y],i)=>s+=bulb(x,y,BC[(i+1)%4]));
     if(night)lights+=pts.map(([x,y],i)=>`<circle cx="${x}" cy="${y+1}" r="7" fill="${BC[(i+1)%4]}" opacity=".55" filter="url(#glow)"/>`).join("");}
+  // --- collection Golden ---
+  if(sh.papillons)[[150,112,-12,"#f7a8c0"],[184,96,10,"#fbe39a"],[286,112,-6,"#b9d7ee"]].forEach(([x,y,r,c])=>s+=`<g transform="translate(${x} ${y}) rotate(${r})"><path d="M0 0C-6 -8 -12 -6 -10 -1C-12 3 -6 6 0 2C6 6 12 3 10 -1C12 -6 6 -8 0 0Z" fill="${c}" stroke="${OUT}" stroke-width="1"/><path d="M0 -3v6" stroke="${OUT}" stroke-width="1.4" stroke-linecap="round"/><path d="M0 -3l-2 -3M0 -3l2 -3" stroke="${OUT}" stroke-width=".7"/></g>`);
+  if(sh.veilleuse){const cx=sh.bibliotheque?350:330,cy=sh.bibliotheque?74:FLOOR-14;
+    lights+=`<circle cx="${cx}" cy="${cy}" r="18" fill="#fff4c4" opacity="${night?.7:.25}" filter="url(#bigglow)"/>`;
+    s+=`${sh.bibliotheque?"":shadow(cx,cy+15,12,3)}<rect x="${cx-7}" y="${cy+9}" width="14" height="5" rx="2" fill="#c9b6a6" ${st}/><circle cx="${cx}" cy="${cy}" r="10" fill="#fff6d6" ${st}/><circle cx="${cx-3}" cy="${cy-2}" r="2" fill="#efe3c0"/><circle cx="${cx+3}" cy="${cy+3}" r="1.5" fill="#efe3c0"/><circle cx="${cx+2}" cy="${cy-4}" r="1" fill="#efe3c0"/>`;}
+  if(sh.aquarium)s+=`<g transform="translate(161 152)"><ellipse cx="0" cy="14" rx="9" ry="2" fill="#3a2a1e" opacity=".2"/><path d="M-6 -4C-12 0 -12 10 -6 14H6C12 10 12 0 6 -4Z" fill="#cfeaf5" fill-opacity=".85" ${st}/><path d="M-9.5 1H9.5V8C9.5 10 7 13 5 13H-5C-7 13 -9.5 10 -9.5 8Z" fill="#9fd0e6" opacity=".7"/><path d="M-6 -4H6" stroke="${OUT}" stroke-width="1.6"/><path d="M-1 7l3 -2l-3 -2l-4 2z" fill="#f2a07b" stroke="${OUT}" stroke-width=".8"/><path d="M-5 5l-2 -1.5v3z" fill="#f2a07b"/><circle cx="4" cy="2" r=".9" fill="#fff"/><circle cx="5" cy="-1" r=".6" fill="#fff"/><path d="M-4 13q-1 -4 1 -6M3 13q1 -3 -1 -5" stroke="#7fae6a" stroke-width="1.3" fill="none"/></g>`;
+  if(sh.sapin){const x=98,y=FLOOR+20;
+    s+=shadow(x,y+2,18,3)+`<rect x="${x-7}" y="${y-8}" width="14" height="10" rx="2" fill="#c9935f" ${st}/>`
+      +[[0,40,22],[ -10,30,18],[-20,20,13]].map(([dy,w])=>"").join("")
+      +`<path d="M${x} ${y-62}L${x-12} ${y-40}H${x-7}L${x-17} ${y-24}H${x-10}L${x-22} ${y-8}H${x+22}L${x+10} ${y-24}H${x+17}L${x+7} ${y-40}H${x+12}Z" fill="#6f9e64" ${st}/>`
+      +`<path d="M${x-14} ${y-30}q14 6 26 -2M${x-18} ${y-16}q18 7 34 -2" stroke="#f7c948" stroke-width="1.2" fill="none"/>`
+      +[[x-8,y-30,"#f7a8c0"],[x+6,y-32,"#ffe28a"],[x-12,y-16,"#c8ecff"],[x+2,y-15,"#ffe28a"],[x+14,y-18,"#f7a8c0"],[x-2,y-44,"#c8ecff"]].map(([a,b2,c])=>`<circle cx="${a}" cy="${b2}" r="2.2" fill="${c}" stroke="${OUT}" stroke-width=".8"/>`).join("")
+      +`<path transform="translate(${x} ${y-64})" d="M0 -6l1.8 3.8l4.2 .6l-3 3l.7 4.2l-3.7 -2l-3.7 2l.7 -4.2l-3 -3l4.2 -.6z" fill="#f7c948" stroke="${OUT}" stroke-width="1"/>`;
+    if(night)lights+=`<ellipse cx="${x}" cy="${y-30}" rx="22" ry="30" fill="#ffe28a" opacity=".3" filter="url(#bigglow)"/>`;}
   if(sh.monstera)s+=shadow(36,FLOOR+20,24,4)+`<path d="M22 ${FLOOR+20}h28l-4 -30h-20z" fill="#f6e7d2" ${st}/><path d="M30 ${FLOOR+20}l-2 6M44 ${FLOOR+20}l2 6" ${st}/><path d="M36 ${FLOOR-10}q-26 -10 -24 -42q18 10 24 42q-6 -38 14 -58q12 26 -14 58q14 -28 32 -30q-2 24 -32 30" fill="#7fae6a" ${st}/>`;
   // tapis
   s+=sh.tapisdoux?`<path d="M96 288L132 248H300L330 288Z" fill="#e38a7a" ${st}/><path d="M108 284L138 252H294L318 284Z" fill="none" stroke="#fffaf2" stroke-width="1.6"/><path d="M150 252l-10 32M180 252l-6 32M210 252l-2 32M240 252l2 32M270 252l6 32M126 268H306" stroke="#f6b2a4" stroke-width="2"/>`
@@ -603,7 +661,7 @@ function room(work){
   const chairBack=`<path d="M182 222V182q0 -8 8 -8h32q8 0 8 8V222" fill="none" stroke="${OUT}" stroke-width="5" stroke-linecap="round"/><path d="M182 222V182q0 -8 8 -8h32q8 0 8 8V222" fill="none" stroke="#f2ead9" stroke-width="2.4" stroke-linecap="round"/><rect x="180" y="172" width="52" height="11" rx="5" fill="#f2ead9" ${st}/><path d="M184 174.5h44" stroke="#fff" stroke-width="1.4" opacity=".7" stroke-linecap="round"/>${[195,206,217].map(x=>`<path d="M${x} 183V222" stroke="${OUT}" stroke-width="4.2" stroke-linecap="round"/><path d="M${x} 183V222" stroke="#f2ead9" stroke-width="1.9" stroke-linecap="round"/>`).join("")}`;
   s+=chair;
   s+=`</g>`;
-  if(work)s+=`<g transform="translate(206 182) scale(.95)" filter="url(#rough)">${charBack(state.char)}</g>`;
+  if(work)s+=`<g transform="translate(206 182) scale(.95)" filter="url(#rough)">${charBack(CH())}</g>`;
   s+=`<g filter="url(#rough)">${chairBack}</g>`;
   if(sh.chaton)s+=`<g transform="translate(66 ${FLOOR+38})" filter="url(#rough)">${shadow(2,10,30,5)}
     <path d="M-26 6q-6 -18 14 -22q20 -4 34 6q10 8 4 18q-4 6 -22 6q-24 0 -30 -8z" fill="#f5b26b" ${st}/>
@@ -617,7 +675,7 @@ function room(work){
     <text x="10" y="-14" font-family="Gaegu,cursive" font-size="9" fill="${OUT}" opacity=".6">z</text><text x="16" y="-22" font-family="Gaegu,cursive" font-size="7" fill="${OUT}" opacity=".5">z</text></g>`;
   if(sh.pouf)s+=`<g transform="translate(118 ${FLOOR+44})" filter="url(#rough)">${shadow(0,9,22,4)}<path d="M-20 0v-10a20 8 0 0 1 40 0v10a20 8 0 0 1 -40 0z" fill="#9fc58a" ${st}/><ellipse cy="-10" rx="20" ry="8" fill="#b9d6a5" ${st}/></g>`;
   // petit soleil debout dans la chambre quand on ne travaille pas
-  if(!work)s+=`<g transform="translate(${sh.bibliotheque?262:330} ${FLOOR+19}) scale(1.05)" filter="url(#rough)">${charSVG(state.char,false)}</g>`;
+  if(!work)s+=`<g transform="translate(${sh.bibliotheque?262:330} ${FLOOR+19}) scale(1.05)" filter="url(#rough)">${charSVG(CH(),false)}</g>`;
   const tone={nuit:["#1b1840",.38],golden:["#ff8a3d",.1],aube:["#ff9ea0",.07],midi:["#fff4d6",0]}[p.key];
   s+=`<rect width="400" height="300" fill="url(#warm)"/><rect width="400" height="300" fill="${tone[0]}" opacity="${tone[1]}"/>${lights}<rect width="400" height="300" fill="url(#vig)"/>`;
   s+=`<rect width="400" height="300" filter="url(#grain)" pointer-events="none"/></svg>`;
@@ -688,7 +746,7 @@ function renderFocus(){
   const lbl=f&&!f.running?"Reprendre":"Pause";$("pause").textContent=lbl;$("fpause").textContent=lbl;
   $("fstate").textContent=f&&!f.running?"En pause":`${state.char.name||"Ton soleil"} travaille avec toi`;
   if(!$("focusView").hidden){
-    const box=$("fscene"),t2=THEMES[state.theme];setHTML(box,room(!!f&&f.running));
+    const box=$("fscene"),t2=THEMES[TH()];setHTML(box,room(!!f&&f.running));
     box.querySelector("svg").setAttribute("preserveAspectRatio","xMidYMid meet");
     const W=box.clientWidth,H=box.clientHeight,h=Math.min(W*.75,H),top=Math.max(0,(H-h)/2),cut=H?((top+h*238/300)/H*100).toFixed(1):50;
     box.style.background=`linear-gradient(to bottom,${t2.wall} 0,${t2.wall2} ${cut}%,${t2.floor} ${cut}%)`;
@@ -702,39 +760,77 @@ charInput.oninput=()=>{state.char.name=charInput.value.trim()||"Soleil";save();r
 function optBtn(key,label,cost,on,owned){
   return `<button class="opt" data-k="${key}" aria-pressed="${on}" ${!owned&&state.rays<cost?"disabled":""}>${label}<small>${owned?(on?"Porté":"À toi"):cost+" rayons"}</small></button>`;
 }
+const CROWN='<svg width="13" height="11" viewBox="0 0 13 11" aria-hidden="true"><path d="M1 9.5L.5 2l3.2 2.6L6.5 0l2.8 4.6L12.5 2l-.5 7.5z" fill="#f7c948" stroke="#5b4636" stroke-width="1"/></svg>';
+function goldBtn(key,gid,label,on){
+  const owned=state.owned[gid],tried=isTrying(key);
+  return `<button class="opt gold" data-g="${key}" data-gid="${gid}" aria-pressed="${on||tried}">${CROWN} ${label}<small>${owned?(on?"Porté":"À toi"):tried?"Aperçu":GOLDEN[gid].price}</small></button>`;
+}
+function isTrying(key){if(!preview)return false;const [slot,k]=key.split(":");
+  if(slot==="tint")return preview.char&&preview.char.tint===k;if(slot==="deco")return preview.shown&&preview.shown[k];
+  if(slot==="theme")return preview.theme===k;return preview.char&&preview.char[slot]===k;}
 function renderWardrobe(){
-  setHTML($("avatar"),`<svg viewBox="-55 -58 110 100" xmlns="http://www.w3.org/2000/svg"><defs><filter id="rough2"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="1.6"/></filter></defs><g filter="url(#rough2)">${charSVG(state.char,false)}</g></svg>`);
-  let h=`<div><h3>Couleur</h3><div class="opts">${Object.entries(TINTS).map(([k,v])=>optBtn("tint:"+k,v.name,v.cost,state.char.tint===k,state.owned["tint-"+k])).join("")}</div></div>`;
+  setHTML($("avatar"),`<svg viewBox="-62 -58 124 100" xmlns="http://www.w3.org/2000/svg"><defs><filter id="rough2"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="1.6"/></filter></defs><g filter="url(#rough2)">${charSVG(CH(),false)}</g></svg>`);
+  const c=CH();
+  let h=`<div><h3>Couleur</h3><div class="opts">${Object.entries(TINTS).filter(([,v])=>!v.gold).map(([k,v])=>optBtn("tint:"+k,v.name,v.cost,state.char.tint===k,state.owned["tint-"+k])).join("")}${goldBtn("tint:lune","tint-lune","Clair de lune",state.char.tint==="lune")}</div></div>`;
   WARDROBE.forEach(w=>{
-    h+=`<div><h3>${w.label}</h3><div class="opts">${optBtn(w.slot+":","Aucun",0,!state.char[w.slot],true)}${Object.entries(w.items).map(([k,[n,c]])=>optBtn(w.slot+":"+k,n,c,state.char[w.slot]===k,state.owned[w.slot+"-"+k])).join("")}</div></div>`;
+    const gold=Object.entries(GOLD_WEAR[w.slot]||{}).map(([k,n])=>goldBtn(w.slot+":"+k,w.slot+"-"+k,n,state.char[w.slot]===k)).join("");
+    h+=`<div><h3>${w.label}</h3><div class="opts">${optBtn(w.slot+":","Aucun",0,!state.char[w.slot],true)}${Object.entries(w.items).map(([k,[n,c]])=>optBtn(w.slot+":"+k,n,c,state.char[w.slot]===k,state.owned[w.slot+"-"+k])).join("")}${gold}</div></div>`;
   });
   setHTML($("wardrobe"),h);
 }
 $("wardrobe").onclick=e=>{
+  const g=e.target.closest("button[data-g]");if(g){tryGold(g.dataset.g,g.dataset.gid);return;}
   const b=e.target.closest("button[data-k]");if(!b)return;const [slot,k]=b.dataset.k.split(":");
   if(slot==="tint"){const v=TINTS[k];if(!state.owned["tint-"+k]){if(state.rays<v.cost)return;state.rays-=v.cost;state.owned["tint-"+k]=true;say(`Nouvelle couleur : ${v.name.toLowerCase()} !`,"ok");}state.char.tint=k;}
   else if(!k){state.char[slot]=null;}
   else{const w=WARDROBE.find(x=>x.slot===slot),[n,c]=w.items[k],id=slot+"-"+k;
     if(!state.owned[id]){if(state.rays<c)return;state.rays-=c;state.owned[id]=true;say(`${n} ajouté à la garde-robe !`,"ok");}
     state.char[slot]=state.char[slot]===k?null:k;}
-  save();render();
+  preview=null;save();render();
 };
+
+/* ===================== Collection Golden : aperçu ===================== */
+// Les paiements ne sont pas encore branchés : on peut essayer un objet Golden, sans l'enregistrer.
+function tryGold(key,gid){
+  const [slot,k]=key.split(":");
+  if(state.owned[gid]){ // déjà acheté : se porte comme les autres
+    if(slot==="deco")state.shown[k]=!state.shown[k];else if(slot==="theme")state.theme=k;else if(slot==="tint")state.char.tint=k;else state.char[slot]=state.char[slot]===k?null:k;
+    save();render();return;}
+  if(isTrying(key)){preview=null;}
+  else if(slot==="deco")preview={shown:{[k]:true}};
+  else if(slot==="theme")preview={theme:k};
+  else preview={char:{[slot]:k}};
+  render();
+}
+function renderGoldBar(){
+  const bar=$("goldbar");if(!preview){bar.hidden=true;return;}
+  const key=preview.theme?preview.theme:preview.shown?Object.keys(preview.shown)[0]:Object.entries(preview.char).map(([s,k])=>s==="tint"?"tint-"+k:s+"-"+k)[0];
+  const g=GOLDEN[key];bar.hidden=false;
+  $("goldname").textContent=`${g.name} · ${g.price}`;
+}
+$("goldclose").onclick=()=>{preview=null;render();};
 
 /* ===================== Déco ===================== */
 function renderShop(){
   setHTML($("shop"),DECO.map(d=>{const own=state.owned[d.id],on=state.shown[d.id];
+    if(d.gold&&!own){const tried=isTrying("deco:"+d.id);
+      return `<div class="deco gold ${tried?"on":""}"><strong>${CROWN} ${d.name}</strong><span class="state">Collection Golden · ${GOLDEN[d.id].price}</span><button class="${tried?"ghost":"soft"} small" data-g="deco:${d.id}" data-gid="${d.id}">${tried?"Retirer l'aperçu":"Essayer"}</button></div>`;}
     const btn=own?`<button class="${on?"ghost":"primary"} small" data-deco="${d.id}">${on?"Ranger":"Installer"}</button>`
       :`<button class="soft small" data-buy="${d.id}" ${state.rays<d.cost?"disabled":""}>${d.cost} rayons</button>`;
     return `<div class="deco ${on?"on":""}"><strong>${d.name}</strong><span class="state">${own?(on?"Dans ta chambre":"Dans le placard"):""}</span>${btn}</div>`;}).join(""));
-  setHTML($("themes"),Object.entries(THEMES).map(([k,v])=>`<button class="opt" data-theme-id="${k}" aria-pressed="${state.theme===k}" ${!state.owned[k]&&state.rays<v.cost?"disabled":""}>
-    <span style="display:block;width:44px;height:26px;border-radius:8px;border:2px solid var(--ink);background:linear-gradient(180deg,${v.wall} 60%,${v.floor} 60%)"></span>${v.name}<small>${state.owned[k]?(state.theme===k?"Choisie":"À toi"):v.cost+" rayons"}</small></button>`).join(""));
+  setHTML($("themes"),Object.entries(THEMES).map(([k,v])=>{const sw=`<span style="display:block;width:44px;height:26px;border-radius:8px;border:2px solid var(--ink);background:linear-gradient(180deg,${v.wall} 60%,${v.floor} 60%)"></span>`;
+    if(v.gold&&!state.owned[k]){const tried=isTrying("theme:"+k);return `<button class="opt gold" data-g="theme:${k}" data-gid="${k}" aria-pressed="${tried}">${sw}${CROWN} ${v.name}<small>${tried?"Aperçu":GOLDEN[k].price}</small></button>`;}
+    return `<button class="opt" data-theme-id="${k}" aria-pressed="${state.theme===k}" ${!state.owned[k]&&state.rays<v.cost?"disabled":""}>
+    ${sw}${v.name}<small>${state.owned[k]?(state.theme===k?"Choisie":"À toi"):v.cost+" rayons"}</small></button>`;}).join(""));
 }
-$("shop").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+$("shop").onclick=e=>{const g=e.target.closest("button[data-g]");if(g){tryGold(g.dataset.g,g.dataset.gid);return;}
+  const b=e.target.closest("button");if(!b)return;
   if(b.dataset.buy){const d=DECO.find(x=>x.id===b.dataset.buy);if(state.rays<d.cost)return;state.rays-=d.cost;state.owned[d.id]=true;state.shown[d.id]=true;say(`${d.name} installé dans ta chambre !`,"ok");}
   if(b.dataset.deco){state.shown[b.dataset.deco]=!state.shown[b.dataset.deco];}
-  save();render();};
-$("themes").onclick=e=>{const b=e.target.closest("button[data-theme-id]");if(!b)return;const k=b.dataset.themeId,v=THEMES[k];
-  if(!state.owned[k]){if(state.rays<v.cost)return;state.rays-=v.cost;state.owned[k]=true;}state.theme=k;save();say(`Ambiance ${v.name.toLowerCase()} appliquée.`,"ok");render();};
+  preview=null;save();render();};
+$("themes").onclick=e=>{const g=e.target.closest("button[data-g]");if(g){tryGold(g.dataset.g,g.dataset.gid);return;}
+  const b=e.target.closest("button[data-theme-id]");if(!b)return;const k=b.dataset.themeId,v=THEMES[k];
+  if(!state.owned[k]){if(state.rays<v.cost)return;state.rays-=v.cost;state.owned[k]=true;}state.theme=k;preview=null;save();say(`Ambiance ${v.name.toLowerCase()} appliquée.`,"ok");render();};
 
 /* ===================== Blocage sans fin ===================== */
 const exits={};
@@ -796,7 +892,7 @@ function render(){
   setHTML($("scene"),room(work));
   const p=phase(),n=state.char.name||"Ton petit soleil";
   $("caption").textContent=work?`${n} travaille avec toi. C'est ${p.label}.`:`C'est ${p.label}. ${n} t'attend dans ta chambre.`;
-  renderWeather();renderRhythm();renderApps();renderFocus();renderWardrobe();renderShop();renderLock();
+  renderWeather();renderRhythm();renderGoldBar();renderApps();renderFocus();renderWardrobe();renderShop();renderLock();
 }
 function renderNative(){
   if(!AND)return;$("nativeBox").hidden=false;let on=false;try{on=AND.isEnabled();}catch(e){}
