@@ -1,17 +1,17 @@
 # Sunrise
 
-Chaque matin, le soleil se lève avec 5 nouveaux rayons.
+Chaque matin, le soleil se lève. Une appli de déconnexion qui fonctionne à la récompense, jamais à la punition.
 
-- **5 rayons de soleil par jour**, rechargés chaque nuit. Un rayon ouvre une app pendant 10 minutes, deux rayons ouvrent tout le téléphone pendant 15 minutes. Les prix sont fixes.
-- **Un bureau ensoleillé à décorer** : chaque rayon gardé devient de la lumière à minuit. Avec cette lumière, tu ajoutes une lampe, des livres, une guirlande, un chat au soleil… La lumière de la fenêtre suit ta journée, de l'aube à la golden hour.
-- **Une plante qui grandit** au fil des jours où tu gardes au moins un rayon.
-- **La vraie météo à ta fenêtre** : soleil, nuages, pluie, neige ou orage, selon le temps qu'il fait dehors (données Open-Meteo, ta position reste sur ton téléphone).
-- **Le mode bureau** : ton bureau en plein écran, à utiliser en paysage pendant que tu travailles, avec un chrono de ton temps de travail. 25 minutes de travail dans la journée = 1 lumière.
-- **Un blocage sans fin** d'une app, de tout le téléphone ou d'une sélection personnalisée. Pour l'arrêter : 60 secondes d'attente et deux confirmations.
+- **Ton petit soleil** : un personnage jaune à habiller (couleur, cheveux, lunettes, chapeau, écharpe, casque audio…) qui travaille avec toi.
+- **Ta chambre** dessinée dans un style cosy : la fenêtre montre la vraie météo et suit l'heure de la journée (aube, plein jour, golden hour, nuit). Tu la décores avec des plantes, une lampe, une guirlande, un fauteuil, un chaton…
+- **Des rayons de soleil gagnés en travaillant** : 1 rayon toutes les 15 minutes de travail, sans abonnement. Ils servent à décorer ta chambre et à habiller ton personnage.
+- **Des pauses pour tes apps** : 5 par jour par défaut, réglables à ton rythme (le changement s'applique le lendemain matin). 1 pause ouvre une app 10 minutes, 2 pauses ouvrent tout le téléphone 15 minutes. Chaque pause gardée devient 1 rayon à minuit (5 maximum par nuit).
+- **Le mode chambre** : plein écran, à utiliser en paysage, avec un chrono de ton temps de travail.
+- **Le blocage sans fin** d'une app, de tout le téléphone ou d'une sélection. Pour l'arrêter : 60 secondes d'attente et deux confirmations.
 
 ## Installer l'appli
 
-Ouvre le lien de l'appli dans Safari (iPhone, iPad) ou Chrome (Android), puis :
+Ouvre https://thesunrise-app.github.io/sunrise/ dans Safari (iPhone, iPad) ou Chrome (Android), puis :
 
 - **iPhone / iPad** : bouton Partager, puis « Sur l'écran d'accueil ».
 - **Android** : menu ⋮, puis « Installer l'application ».
@@ -21,7 +21,7 @@ Ouvre le lien de l'appli dans Safari (iPhone, iPad) ou Chrome (Android), puis :
 Une appli web ne peut pas fermer les autres apps. L'app **Raccourcis** permet de rediriger :
 
 1. Raccourcis, puis Automatisation, puis **+**, puis **App**.
-2. Choisis les apps à bloquer, coche « Est ouverte » et « Exécuter immédiatement ».
+2. Choisis les apps concernées, coche « Est ouverte » et « Exécuter immédiatement ».
 3. Ajoute l'action **Ouvrir les URL** avec le lien de Sunrise.
 
 ## Confidentialité
