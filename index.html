@@ -254,7 +254,7 @@ const APPS=[
 const DECO=[
   {id:"tasse",name:"Tasse fumante",cost:2},{id:"crayons",name:"Pot à crayons",cost:2},{id:"lampe",name:"Lampe de bureau",cost:3},
   {id:"posters",name:"Notes et polaroïds",cost:3},{id:"tableau",name:"Petits cadres",cost:4},{id:"horloge",name:"Horloge",cost:4},
-  {id:"guirlande",name:"Guirlande étoiles",cost:5},{id:"etagere",name:"Étagère plantes et radio",cost:6},{id:"pouf",name:"Pouf",cost:5},
+  {id:"guirlande",name:"Guirlande étoiles",cost:5},{id:"guirlandefen",name:"Guirlande fenêtre",cost:4},{id:"fanions",name:"Fanions au-dessus du bureau",cost:4},{id:"guirlandebib",name:"Guirlande bibliothèque",cost:4},{id:"etagere",name:"Étagère plantes et radio",cost:6},{id:"pouf",name:"Pouf",cost:5},
   {id:"monstera",name:"Grande plante",cost:6},{id:"tapisdoux",name:"Tapis à carreaux",cost:7},{id:"lampadaire",name:"Lampadaire",cost:7},
   {id:"bibliotheque",name:"Bibliothèque",cost:10},{id:"platine",name:"Platine vinyle (bibliothèque)",cost:8},{id:"chaton",name:"Chaton",cost:12}
 ];
@@ -353,7 +353,7 @@ function renderWeather(){
 const OUT="#5b4636", SW=1.9;
 const st=`stroke="${OUT}" stroke-width="${SW}" stroke-linejoin="round" stroke-linecap="round"`;
 const BODY="M0 -25A25 25 0 1 1 0 25A25 25 0 1 1 0 -25Z";
-function sunRays(t){let r="";for(let i=0;i<12;i++){const a=(i*30-90)*Math.PI/180,l=i%2?36:41,w=i%2?.15:.18;const p=(ang,rad)=>`${(Math.cos(ang)*rad).toFixed(1)} ${(Math.sin(ang)*rad).toFixed(1)}`;r+=`<path d="M${p(a-w,23)}Q${p(a,l+3)} ${p(a+w,23)}Z" fill="${t.mane}" ${st}/>`;}return r;}
+function sunRays(t){const pts=Array.from({length:12},(_,i)=>{const a=(i*30-90)*Math.PI/180;return[(Math.cos(a)*27).toFixed(1),(Math.sin(a)*27).toFixed(1)];});return pts.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="9" fill="${t.mane}" ${st}/>`).join("")+pts.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="8" fill="${t.mane}"/>`).join("")+`<circle r="27" fill="${t.mane}"/>`;}
 function charSVG(c,work){
   const t=TINTS[c.tint]||TINTS.soleil, HAIR="#8a5a3c";
   // couronne de rayons tout doux, seulement sur le haut de la tête
@@ -492,7 +492,7 @@ function room(work){
       return `M${k(-2)} ${top}L${k(30)} ${top}Q${k(22)} ${T-24} ${k(15)} ${T}Q${k(18)} ${T+30} ${k(28)} ${B}${hem}L${k(0)} ${B}Q${k(-4)} ${T} ${k(-2)} ${top}Z`;};
     const L1=cur(X-15,1),R1=cur(X+WB.w+15,-1);
     const folds=(o,d)=>`M${o+d*8} ${top+2}q${d*2} 30 ${d*6} ${T-top-4}M${o+d*17} ${top+2}q${-d*1} 28 ${d*1} ${T-top-6}M${o+d*8} ${T+6}q${-d*2} 20 ${d*2} ${B-T-8}M${o+d*18} ${T+6}q${d*2} 20 ${d*4} ${B-T-8}`;
-    const tie=(o,d)=>`<path d="M${o+d*8} ${T-4}q${d*10} 6 ${d*14} 2l${d*1} 6q${-d*8} 2 ${-d*16} -2z" fill="#e9a1b5" ${st}/><circle cx="${o+d*16}" cy="${T+1}" r="2.6" fill="#f6c7c0" ${st}/>`;
+    const tie=(o,d)=>{const a=o+d*-5,b=o+d*18;return `<path d="M${a} ${T-3}Q${(a+b)/2} ${T+1} ${b} ${T-3}L${b} ${T+4}Q${(a+b)/2} ${T+8} ${a} ${T+4}Z" fill="#e9a1b5" ${st}/><path d="M${a} ${T+0.5}Q${(a+b)/2} ${T+4.5} ${b} ${T+0.5}" stroke="#fff" stroke-width=".8" opacity=".5" fill="none"/><circle cx="${o+d*-6}" cy="${T+0.5}" r="3.2" fill="#f6c7c0" ${st}/><path d="M${o+d*-6} ${T+3.5}l${-d*2} 8M${o+d*-6} ${T+3.5}l${d*1.5} 8" stroke="#e9a1b5" stroke-width="2.2" stroke-linecap="round"/>`;};
     const rod=`<path d="M${X-24} ${top-2}H${X+WB.w+24}" stroke="${OUT}" stroke-width="3.4" stroke-linecap="round"/><path d="M${X-24} ${top-2}H${X+WB.w+24}" stroke="${t.wood}" stroke-width="1.5" stroke-linecap="round"/><circle cx="${X-26}" cy="${top-2}" r="3.6" fill="${t.wood}" ${st}/><circle cx="${X+WB.w+26}" cy="${top-2}" r="3.6" fill="${t.wood}" ${st}/>`;
     const rings=[2,10,18,26].map(v=>`<circle cx="${X-15+v}" cy="${top}" r="2" fill="none" stroke="${OUT}" stroke-width="1"/><circle cx="${X+WB.w+15-v}" cy="${top}" r="2" fill="none" stroke="${OUT}" stroke-width="1"/>`).join("");
     return rod+[L1,R1].map(d=>`<path d="${d}" fill="url(#plaid)" ${st}/><path d="${d}" fill="url(#fold)"/>`).join("")
@@ -525,6 +525,24 @@ function room(work){
     s+=row(FLOOR-6,BL+7,354,1)+`<path d="M356 ${FLOOR-6}l2 -18h28l2 18z" fill="#d9b48a" stroke="${OUT}" stroke-width="1.1"/><path d="M358 ${FLOOR-18}h28M357 ${FLOOR-12}h30M364 ${FLOOR-24}v18M372 ${FLOOR-24}v18M380 ${FLOOR-24}v18" stroke="${OUT}" stroke-width=".8" opacity=".5"/><path d="M362 ${FLOOR-24}q10 -10 20 0" fill="none" stroke="${OUT}" stroke-width="1.4"/>`;
     s+=`<path d="M${BL+2} ${FLOOR+2}v4M${BR-2} ${FLOOR+2}v4" stroke="${OUT}" stroke-width="3" stroke-linecap="round"/>`;
   }
+  // --- guirlandes en plus ---
+  const bulb=(x,y,c)=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${c}" opacity=".45" filter="url(#glow)"/><ellipse cx="${x.toFixed(1)}" cy="${(y+1.5).toFixed(1)}" rx="2.2" ry="3" fill="${c}" stroke="${OUT}" stroke-width=".9"/><rect x="${(x-1.4).toFixed(1)}" y="${(y-2.6).toFixed(1)}" width="2.8" height="1.8" fill="#8a7a6a"/>`;
+  const BC=["#ffe28a","#ffc2c2","#c8ecff","#d6f0b8"];
+  if(sh.guirlandefen){const top=Y-16,L0=X-24,R0=X+WB.w+24;let d=`M${L0} ${top}`,pts=[];
+    for(let i=0;i<4;i++){const x0=L0+i*(R0-L0)/4,x1=L0+(i+1)*(R0-L0)/4;d+=`Q${(x0+x1)/2} ${top+18} ${x1} ${top}`;for(let j=1;j<4;j++){const tt=j/4,u=1-tt;pts.push([u*u*x0+2*u*tt*(x0+x1)/2+tt*tt*x1,u*u*top+2*u*tt*(top+18)+tt*tt*top]);}}
+    const side=(x)=>{let o=`M${x} ${top}`;for(let j=1;j<=6;j++)o+=`Q${x+(j%2?5:-5)} ${top+j*20-10} ${x} ${top+j*20}`;return o;};
+    s+=`<path d="${d}${side(L0+2)}${side(R0-2)}" fill="none" stroke="${OUT}" stroke-width="1"/>`;
+    for(let j=1;j<=6;j++){pts.push([L0+2+(j%2?3:-3),top+j*20-10]);pts.push([R0-2+(j%2?3:-3),top+j*20-10]);}
+    pts.forEach(([x,y],i)=>s+=bulb(x,y+3,BC[i%4]));
+    if(night)lights+=pts.map(([x,y],i)=>`<circle cx="${x.toFixed(1)}" cy="${(y+4).toFixed(1)}" r="7" fill="${BC[i%4]}" opacity=".55" filter="url(#glow)"/>`).join("");}
+  if(sh.fanions){const L0=176,R0=262,y0=112;s+=`<path d="M${L0} ${y0}Q${(L0+R0)/2} ${y0+16} ${R0} ${y0}" fill="none" stroke="${OUT}" stroke-width="1"/><circle cx="${L0}" cy="${y0}" r="1.8" fill="#c9b6a6" ${st}/><circle cx="${R0}" cy="${y0}" r="1.8" fill="#c9b6a6" ${st}/>`;
+    const FC=["#f2a07b","#f7c948","#9fc58a","#7fa8c9","#e9a1b5","#f7c948"];
+    for(let i=0;i<6;i++){const tt=(i+.5)/6,u=1-tt,x=u*u*L0+2*u*tt*(L0+R0)/2+tt*tt*R0,y=u*u*y0+2*u*tt*(y0+16)+tt*tt*y0;s+=`<path d="M${(x-6).toFixed(1)} ${(y-.5).toFixed(1)}L${(x+6).toFixed(1)} ${(y-.5).toFixed(1)}L${x.toFixed(1)} ${(y+11).toFixed(1)}Z" fill="${FC[i]}" stroke="${OUT}" stroke-width="1" stroke-linejoin="round"/>`;}}
+  if(sh.guirlandebib&&sh.bibliotheque){let d="M302 92",pts=[];const xs=[302,316,330,344,358,372,386,398];
+    for(let i=0;i<xs.length-1;i++){const x0=xs[i],x1=xs[i+1];d+=`Q${(x0+x1)/2} ${100} ${x1} 92`;pts.push([(x0+x1)/2,96]);}
+    d+=`M398 92Q404 140 396 190Q402 220 396 ${FLOOR-6}`;[[400,116],[399,140],[398,166],[399,200],[398,222]].forEach(q=>pts.push(q));
+    s+=`<path d="${d}" fill="none" stroke="${OUT}" stroke-width="1"/>`;pts.forEach(([x,y],i)=>s+=bulb(x,y,BC[(i+1)%4]));
+    if(night)lights+=pts.map(([x,y],i)=>`<circle cx="${x}" cy="${y+1}" r="7" fill="${BC[(i+1)%4]}" opacity=".55" filter="url(#glow)"/>`).join("");}
   if(sh.monstera)s+=shadow(36,FLOOR+20,24,4)+`<path d="M22 ${FLOOR+20}h28l-4 -30h-20z" fill="#f6e7d2" ${st}/><path d="M30 ${FLOOR+20}l-2 6M44 ${FLOOR+20}l2 6" ${st}/><path d="M36 ${FLOOR-10}q-26 -10 -24 -42q18 10 24 42q-6 -38 14 -58q12 26 -14 58q14 -28 32 -30q-2 24 -32 30" fill="#7fae6a" ${st}/>`;
   // tapis
   s+=sh.tapisdoux?`<path d="M96 288L132 248H300L330 288Z" fill="#e38a7a" ${st}/><path d="M108 284L138 252H294L318 284Z" fill="none" stroke="#fffaf2" stroke-width="1.6"/><path d="M150 252l-10 32M180 252l-6 32M210 252l-2 32M240 252l2 32M270 252l6 32M126 268H306" stroke="#f6b2a4" stroke-width="2"/>`
