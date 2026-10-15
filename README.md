@@ -1,5 +1,7 @@
 # Sunrise
 
+Site : https://thesunrise-app.github.io/sunrise/
+
 Chaque matin, le soleil se lève. Une appli de déconnexion qui fonctionne à la récompense, jamais à la punition.
 
 - **Ton petit soleil** : un personnage jaune à habiller (couleur, cheveux, lunettes, chapeau, écharpe, casque audio…) qui travaille avec toi.
@@ -19,7 +21,7 @@ Ensuite, Instagram, TikTok, Snapchat et YouTube restent fermés tant que tu ne p
 
 ## Installer la version web
 
-Ouvre https://thesunrise-app.github.io/sunrise/ dans Safari (iPhone, iPad) ou Chrome (Android), puis :
+Ouvre https://thesunrise-app.github.io/sunrise/app.html dans Safari (iPhone, iPad) ou Chrome (Android), puis :
 
 - **iPhone / iPad** : bouton Partager, puis « Sur l'écran d'accueil ».
 - **Android** : menu ⋮, puis « Installer l'application ».

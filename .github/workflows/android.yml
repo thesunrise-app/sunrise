@@ -26,7 +26,7 @@ jobs:
       - name: Copier l'interface de Sunrise dans l'appli
         run: |
           mkdir -p android/app/src/main/assets/icons
-          cp index.html android/app/src/main/assets/
+          cp app.html android/app/src/main/assets/index.html
           cp icons/*.png android/app/src/main/assets/icons/
 
       - name: Compiler l'APK

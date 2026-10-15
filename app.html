@@ -1,0 +1,816 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Travaille avec ton petit soleil, gagne des rayons et décore ta chambre.">
+<meta name="theme-color" content="#fff8ea">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Sunrise">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+<title>Sunrise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Nunito:wght@400;600;800&display=swap">
+<style>
+/* Layout : appli mobile — la chambre dessinée en haut, le contenu de l'onglet dessous, 5 onglets en bas */
+:root{
+  --bg:#f6eadb; --card:#fffaf2; --ink:#4a3a2e; --muted:#8b7765; --line:#e6d4bd;
+  --sun:#f7c948; --sun-soft:#fdeeb9; --peach:#f2a07b; --sage:#7f9e6c; --warn:#cf6546;
+  --display:"Gaegu","Comic Sans MS",ui-rounded,cursive;
+  --body:"Nunito",ui-rounded,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#2a2330; --card:#352c3d; --ink:#f5e9d8; --muted:#c3b3a6; --line:#4b4056;
+  --sun:#f7d26a; --sun-soft:#4b3d22; --peach:#f5ae8c; --sage:#a3c28e; --warn:#f08a6a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#2a2330; --card:#352c3d; --ink:#f5e9d8; --muted:#c3b3a6; --line:#4b4056;
+  --sun:#f7d26a; --sun-soft:#4b3d22; --peach:#f5ae8c; --sage:#a3c28e; --warn:#f08a6a; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:12px calc(96px + env(safe-area-inset-bottom,0px))}
+main{max-width:500px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1,h2{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance;line-height:1.1}
+h1{font-size:2.3rem}
+h1 span{color:var(--sun);-webkit-text-stroke:1px var(--ink)}
+h2{font-size:1.6rem}
+h3{font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:800;margin:0}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.chips{display:flex;gap:8px}
+.chip{display:flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--line);border-radius:999px;padding:4px 12px 4px 6px;font-weight:800;font-variant-numeric:tabular-nums}
+.scene{border-radius:24px;overflow:hidden;border:2px solid var(--ink)}
+.scene svg{display:block;width:100%;height:auto}
+.caption{margin:-4px 4px 0;font-size:.9rem;color:var(--muted)}
+.weather{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-8px 4px 0;font-size:.9rem}
+.link{flex:none;background:none;border:0;padding:2px 0;color:var(--muted);text-decoration:underline;font-weight:600;font-size:.88rem;cursor:pointer}
+.cityform{display:flex;gap:8px;width:100%}
+.cityform input,.namefield input{font:inherit;flex:1;min-width:0;padding:9px 12px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink)}
+.preview{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+.preview button{flex:none;padding:5px 10px;font-size:.8rem;border:2px solid var(--line);background:transparent;border-radius:999px}
+.preview button[aria-pressed="true"]{background:var(--sun-soft);border-color:var(--sun)}
+.panel{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.note{font-size:.9rem;color:var(--muted);margin:0}
+.msg{font-size:.95rem;margin:0;min-height:1.4em;font-weight:700}
+.msg.ok{color:var(--sage)} .msg.warn{color:var(--warn)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+button{font:inherit;font-weight:800;border:0;border-radius:14px;padding:12px 16px;cursor:pointer;flex:1;min-width:0;color:var(--ink)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+button:disabled{opacity:.4;cursor:not-allowed}
+.primary{background:var(--sun);color:#4a3a2e;box-shadow:0 3px 0 #c99a1f}
+.ghost{background:transparent;border:2px solid var(--line)}
+.danger{background:var(--warn);color:#fffaf2}
+.soft{background:var(--sun-soft)}
+.small{flex:none;padding:8px 12px;font-size:.88rem}
+.list{display:flex;flex-direction:column;gap:10px;list-style:none;margin:0;padding:0}
+.item{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:12px;padding:10px;border-radius:16px;border:2px solid var(--line)}
+.item .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--bg);color:var(--muted)}
+.item .nm{min-width:0}
+.item .nm strong{display:block;font-weight:800}
+.state{font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.state.open{color:var(--sage);font-weight:700}
+.rhythm{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;border-top:2px dashed var(--line);flex-wrap:wrap}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:44px;font-size:1.3rem;padding:6px}
+.stepper output{font-family:var(--display);font-size:2rem;font-weight:700;min-width:2ch;text-align:center;font-variant-numeric:tabular-nums}
+.native{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px;border-radius:16px;border:2px dashed var(--sun);background:color-mix(in srgb,var(--sun-soft) 60%,transparent)}
+.native p{margin:0;flex:1 1 200px;font-size:.92rem;font-weight:600}
+.native.on{border-style:solid;border-color:var(--sage);background:transparent}
+.search{font:inherit;width:100%;padding:9px 12px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink);margin-bottom:10px}
+#customApps.phoneapps{max-height:320px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+#customApps.phoneapps label{border-radius:12px;padding:6px 8px;min-width:0}
+#customApps.phoneapps label span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#customApps img{width:24px;height:24px;border-radius:6px;flex:none}
+.timer{font-family:var(--display);font-size:4.4rem;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;line-height:1}
+.bar{height:12px;border-radius:99px;background:var(--line);overflow:hidden;border:2px solid var(--line)}
+.bar i{display:block;height:100%;width:0;background:var(--sun);transition:width .5s linear}
+select{font:inherit;flex:1;min-width:0;padding:11px 12px;border-radius:14px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+fieldset{border:2px solid var(--line);border-radius:16px;padding:12px;margin:0}
+fieldset legend{padding:0 6px}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks label{display:flex;align-items:center;gap:8px;padding:8px 12px;border:2px solid var(--line);border-radius:999px;cursor:pointer}
+.checks input{accent-color:var(--warn);width:18px;height:18px}
+#hardlist .item{grid-template-columns:40px 1fr}
+#hardlist .row{grid-column:1/-1}
+.shop{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.deco{border:2px solid var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.deco.on{border-color:var(--sun);background:color-mix(in srgb,var(--sun-soft) 55%,transparent)}
+.deco strong{font-weight:800}
+.deco button{margin-top:auto}
+.opts{display:flex;gap:8px;flex-wrap:wrap}
+.opt{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 12px;border:2px solid var(--line);background:transparent;border-radius:14px;font-size:.88rem;min-width:84px}
+.opt small{font-weight:600;color:var(--muted);font-size:.75rem}
+.opt[aria-pressed="true"]{border-color:var(--sun);background:var(--sun-soft)}
+.avatar{background:var(--sun-soft);border-radius:20px;border:2px solid var(--line);display:grid;place-items:center}
+.avatar svg{width:min(220px,60vw);height:auto;display:block}
+.namefield{display:flex;gap:8px}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);border-top:2px solid var(--line);
+  padding:6px max(8px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-right,0px));z-index:5}
+.tabs div{max-width:500px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+.tabs button{background:transparent;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:.72rem;color:var(--muted);border-radius:12px}
+.tabs button[aria-selected="true"]{color:var(--ink);background:var(--sun-soft)}
+.focusview{position:fixed;inset:0;z-index:20;background:var(--bg);display:grid;grid-template-rows:minmax(0,1fr) auto;
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+.focusview .fscene{min-height:0;overflow:hidden}
+.focusview .fscene svg{width:100%;height:100%;display:block}
+.fpanel{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 16px 18px;border-top:2.5px solid var(--ink);background:var(--card)}
+.chrono{font-family:var(--display);font-weight:700;font-size:clamp(3rem,12vw,5rem);line-height:1;font-variant-numeric:tabular-nums}
+.fpanel .row{width:100%;max-width:360px}
+.hint{font-size:.85rem;color:var(--muted);margin:0;text-align:center}
+@media (orientation:landscape){
+  .focusview{grid-template-rows:none;grid-template-columns:minmax(0,1fr) minmax(230px,30%)}
+  .fpanel{justify-content:center;border-top:0;border-left:2.5px solid var(--ink)}
+  .chrono{font-size:clamp(2.6rem,6vw,4.6rem)}
+  .focusview .hint.rotate{display:none}
+}
+@keyframes fall{from{transform:translateY(-20px)}to{transform:translateY(140px)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
+.drop{animation:fall .9s linear infinite}.flake{animation:fall 7s linear infinite}
+.breathe{animation:bob 3.2s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.drop,.flake,.breathe,.bar i{animation:none;transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div>
+      <h3>Chaque matin, le soleil se lève</h3>
+      <h1>Sun<span>rise</span></h1>
+    </div>
+    <div class="chips" aria-live="polite">
+      <span class="chip" title="Rayons de soleil gagnés en travaillant"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><g stroke="#4a3a2e" stroke-width="1.6"><circle cx="13" cy="13" r="6.5" fill="#f7c948"/></g><g stroke="#e9a93a" stroke-width="2.6" stroke-linecap="round"><path d="M13 1.5v3M13 21.5v3M1.5 13h3M21.5 13h3M4.8 4.8l2 2M19.2 19.2l2 2M4.8 21.2l2-2M19.2 6.8l2-2"/></g></svg><span id="rays">0</span></span>
+      <span class="chip" title="Pauses du jour pour ouvrir tes apps"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="10" fill="var(--sun-soft)" stroke="var(--ink)" stroke-width="1.6"/><path d="M10 8.5v9M16 8.5v9" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/></svg><span id="pauses">5</span>&nbsp;pauses</span>
+    </div>
+  </div>
+
+  <div class="scene" id="scene" role="img" aria-label="Ta chambre et ton petit soleil"></div>
+  <p class="caption" id="caption"></p>
+  <div class="weather">
+    <span id="wtext">Je regarde le temps qu'il fait dehors…</span>
+    <button class="link" id="cityBtn">Changer de ville</button>
+    <form class="cityform" id="cityForm" hidden>
+      <input id="cityInput" placeholder="Ta ville, ex. Aix-en-Provence" autocomplete="address-level2">
+      <button class="primary small" type="submit">OK</button>
+    </form>
+    <div class="preview" id="preview" hidden></div>
+  </div>
+  <p class="msg" id="msg">Travaille pour gagner des rayons de soleil, puis décore ta chambre et habille ton petit soleil.</p>
+
+  <!-- Chambre : pauses pour les apps -->
+  <section class="panel" data-tab="chambre" aria-labelledby="c-title">
+    <h2 id="c-title">Prendre une pause</h2>
+    <div class="native" id="nativeBox" hidden>
+      <p id="nativeText"></p>
+      <button class="primary small" id="nativeBtn">Activer le blocage</button>
+    </div>
+    <ul class="list" id="apps"></ul>
+    <p class="note">1 pause ouvre une app 10 min, 2 pauses ouvrent tout le téléphone 15 min. Chaque pause gardée à minuit devient 1 rayon de soleil (5 rayons max par nuit).</p>
+    <div class="rhythm">
+      <div><h3>Mon rythme</h3><p class="note" id="rhythmNote">5 pauses par jour</p></div>
+      <div class="stepper">
+        <button class="ghost small" id="less" aria-label="Une pause de moins">−</button>
+        <output id="daily" aria-live="polite">5</output>
+        <button class="ghost small" id="more" aria-label="Une pause de plus">+</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Focus -->
+  <section class="panel" data-tab="focus" aria-labelledby="f-title" hidden>
+    <h2 id="f-title">Temps de travail</h2>
+    <div class="timer" id="timer">00:00:00</div>
+    <p class="note" style="text-align:center" id="today">Aujourd'hui : 0 min</p>
+    <div class="bar"><i id="progress"></i></div>
+    <p class="note" id="nextRay">Encore 15 min avant ton prochain rayon.</p>
+    <div class="row"><button class="primary" id="enter">Entrer dans ma chambre</button></div>
+    <div class="row">
+      <button class="ghost" id="pause" disabled>Pause</button>
+      <button class="ghost" id="stop" disabled>Terminer</button>
+    </div>
+    <p class="note">Toutes les 15 min de travail, ton petit soleil gagne 1 rayon. Pas d'abonnement : tout se gagne en travaillant.</p>
+  </section>
+
+  <!-- Perso -->
+  <section class="panel" data-tab="perso" aria-labelledby="p-title" hidden>
+    <h2 id="p-title">Mon petit soleil</h2>
+    <div class="avatar" id="avatar"></div>
+    <div class="namefield">
+      <label class="sr" for="charName" hidden>Prénom</label>
+      <input id="charName" maxlength="16" placeholder="Son prénom">
+    </div>
+    <div id="wardrobe" style="display:flex;flex-direction:column;gap:14px"></div>
+  </section>
+
+  <!-- Déco -->
+  <section class="panel" data-tab="deco" aria-labelledby="d-title" hidden>
+    <h2 id="d-title">Décorer ma chambre</h2>
+    <div class="shop" id="shop"></div>
+    <h2>Ambiance</h2>
+    <div class="opts" id="themes"></div>
+  </section>
+
+  <!-- Blocage -->
+  <section class="panel" data-tab="blocage" aria-labelledby="l-title" hidden>
+    <h2 id="l-title">Blocage sans fin</h2>
+    <p class="note">Bloque une app, tout le téléphone ou ta sélection, sans limite de temps. Les pauses ne marchent pas sur ce qui est bloqué.</p>
+    <div class="row">
+      <label class="state" for="target" style="flex-basis:100%">Quoi bloquer</label>
+      <select id="target"></select>
+      <button class="danger" id="hardOn">Bloquer</button>
+    </div>
+    <fieldset id="customBox" hidden>
+      <legend class="state">Choisis les apps les plus nocives pour toi</legend>
+      <input id="appSearch" class="search" placeholder="Chercher une app…" autocomplete="off" hidden>
+      <div id="customApps" class="checks"></div>
+    </fieldset>
+    <ul class="list" id="hardlist"></ul>
+    <p class="note">Pour arrêter un blocage : 60 secondes d'attente, puis deux confirmations.</p>
+  </section>
+</main>
+
+<nav class="tabs" aria-label="Sections"><div role="tablist">
+  <button role="tab" data-go="chambre" aria-selected="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9H3z"/><path d="M10 20v-5h4v5"/></svg>Chambre</button>
+  <button role="tab" data-go="focus" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg>Focus</button>
+  <button role="tab" data-go="perso" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="7"/><path d="M12 2v2M3 13H1M23 13h-2M5 6L3.5 4.5M19 6l1.5-1.5"/><circle cx="9.5" cy="12" r=".6" fill="currentColor"/><circle cx="14.5" cy="12" r=".6" fill="currentColor"/></svg>Perso</button>
+  <button role="tab" data-go="deco" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 21c-3-2-5-5-5-8a5 5 0 0 1 10 0c0 3-2 6-5 8zM12 13V8M12 10l-2-2M12 9l2-2"/></svg>Déco</button>
+  <button role="tab" data-go="blocage" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Blocage</button>
+</div></nav>
+
+<div class="focusview" id="focusView" hidden role="dialog" aria-label="Ma chambre, mode focus">
+  <div class="fscene" id="fscene"></div>
+  <div class="fpanel">
+    <h3 id="fstate">Au travail</h3>
+    <div class="chrono" id="fchrono">00:00:00</div>
+    <p class="hint" id="ftoday">Aujourd'hui : 0 min</p>
+    <div class="row">
+      <button class="ghost" id="fpause">Pause</button>
+      <button class="primary" id="fexit">Quitter</button>
+    </div>
+    <p class="hint rotate">Tourne ton téléphone pour passer en paysage.</p>
+  </div>
+</div>
+
+<script>
+/* ===================== Règles et catalogues ===================== */
+const RULES={daily:5, exitWait:60, block:15*60000};
+const today=()=>new Date().toLocaleDateString("fr-CA");
+const APPS=[
+  {id:"insta",name:"Instagram",cost:1,min:10,pkgs:["com.instagram.android","com.instagram.lite"]},
+  {id:"tiktok",name:"TikTok",cost:1,min:10,pkgs:["com.zhiliaoapp.musically","com.ss.android.ugc.trill","com.zhiliaoapp.musically.go"]},
+  {id:"snap",name:"Snapchat",cost:1,min:10,pkgs:["com.snapchat.android"]},
+  {id:"yt",name:"YouTube",cost:1,min:10,pkgs:["com.google.android.youtube"]},
+  {id:"phone",name:"Tout le téléphone",cost:2,min:15}
+];
+const DECO=[
+  {id:"tasse",name:"Tasse fumante",cost:2},{id:"crayons",name:"Pot à crayons",cost:2},{id:"lampe",name:"Lampe de bureau",cost:3},
+  {id:"posters",name:"Notes et polaroïds",cost:3},{id:"tableau",name:"Petits cadres",cost:4},{id:"horloge",name:"Horloge",cost:4},
+  {id:"guirlande",name:"Guirlande étoiles",cost:5},{id:"guirlandefen",name:"Guirlande fenêtre",cost:4},{id:"fanions",name:"Fanions au-dessus du bureau",cost:4},{id:"guirlandebib",name:"Guirlande bibliothèque",cost:4},{id:"etagere",name:"Étagère plantes et radio",cost:6},{id:"pouf",name:"Pouf",cost:5},
+  {id:"monstera",name:"Grande plante",cost:6},{id:"tapisdoux",name:"Tapis à carreaux",cost:7},{id:"lampadaire",name:"Lampadaire",cost:7},
+  {id:"bibliotheque",name:"Bibliothèque",cost:10},{id:"platine",name:"Platine vinyle (bibliothèque)",cost:8},{id:"chaton",name:"Chaton",cost:12}
+];
+const THEMES={
+  creme:{name:"Crème",cost:0,wall:"#f3e4cf",wall2:"#ecd7bb",floor:"#d9a877",floor2:"#c48f5f",wood:"#b97f52"},
+  peche:{name:"Pêche",cost:4,wall:"#f8d9c8",wall2:"#f1c8b2",floor:"#d6a27a",floor2:"#c08a62",wood:"#b07a52"},
+  sauge:{name:"Sauge",cost:4,wall:"#dfe6cf",wall2:"#cfd9bb",floor:"#cfa77f",floor2:"#b98f66",wood:"#a77b55"},
+  lavande:{name:"Lavande",cost:4,wall:"#e3dbef",wall2:"#d4c9e5",floor:"#c99e7b",floor2:"#b38763",wood:"#a2765a"}
+};
+const TINTS={soleil:{name:"Soleil",cost:0,body:"#ffd54f",mane:"#ffb547"},dore:{name:"Doré",cost:3,body:"#f6c453",mane:"#e3923a"},
+  peche:{name:"Pêche",cost:3,body:"#ffc8a2",mane:"#f59a7a"},citron:{name:"Citron",cost:3,body:"#fff07a",mane:"#f2cc45"}};
+const WARDROBE=[
+  {slot:"hair",label:"Cheveux",items:{meche:["Mèche",3],frange:["Frange",4],chignon:["Chignon",5],boucles:["Boucles",6]}},
+  {slot:"glasses",label:"Lunettes",items:{rondes:["Rondes",3],soleil:["De soleil",4],coeur:["Cœur",5]}},
+  {slot:"hat",label:"Chapeau",items:{bonnet:["Bonnet",4],casquette:["Casquette",4],bob:["Bob",5],fleurs:["Couronne de fleurs",6]}},
+  {slot:"neck",label:"Au cou",items:{noeud:["Nœud",3],echarpe:["Écharpe",4],foulard:["Foulard",4]}},
+  {slot:"ears",label:"Sur les oreilles",items:{casque:["Casque audio",6]}}
+];
+
+/* ===================== État ===================== */
+let state={daily:RULES.daily, nextDaily:null, pauses:RULES.daily, day:today(), unlocks:{}, focus:null, workDay:today(), workMs:0, blocks:0, hard:{}, custom:[],
+  rays:5, owned:{creme:true,"tint-soleil":true}, shown:{}, theme:"creme",
+  char:{name:"Soleil",tint:"soleil",hair:null,glasses:null,hat:null,neck:null,ears:null}};
+(function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem("sunrise2"));
+    if(s){state=Object.assign(state,s);return;}
+    const o=JSON.parse(localStorage.getItem("sunrise")); // ancienne version : on garde ce qui compte
+    if(o){state.rays=(o.light||0)+5;state.pauses=o.rays??RULES.daily;state.day=o.day||today();
+      ["hard","custom","unlocks","workDay","workMs"].forEach(k=>{if(o[k]!=null)state[k]=o[k];});
+      if(typeof state.hard!=="object")state.hard={};}
+  }catch(e){}
+})();
+const AND=window.SunriseAndroid||null; // présent seulement dans l'appli Android
+let phoneApps=null; // [{pkg,name,icon}] : toutes les apps du téléphone (Android)
+function loadPhoneApps(){if(!AND||phoneApps)return;try{phoneApps=JSON.parse(AND.getApps()).sort((a,b)=>a.name.localeCompare(b.name,"fr"));}catch(e){phoneApps=[];}}
+function syncNative(){if(!AND)return;try{
+  const extra=state.custom.filter(id=>id.startsWith("pkg:")).map(id=>({id,name:nameOf(id),pkgs:[id.slice(4)],managed:false}));
+  AND.sync(JSON.stringify({unlocks:state.unlocks,hard:state.hard,custom:state.custom,
+  apps:[...APPS.filter(a=>a.id!=="phone").map(a=>({id:a.id,name:a.name,pkgs:a.pkgs,managed:true})),...extra]}));}catch(e){}}
+function save(){try{localStorage.setItem("sunrise2",JSON.stringify(state));}catch(e){}syncNative();}
+const $=id=>document.getElementById(id);
+const setHTML=(el,h)=>{if(el._h!==h){el._h=h;el.innerHTML=h;}};
+const fmt=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+const plural=(n,w)=>`${n} ${w}${n>1?"s":""}`;
+function say(t,c=""){const m=$("msg");m.textContent=t;m.className="msg "+c;}
+state.customNames=state.customNames||{};
+const nameOf=id=>id==="custom"?"Ma sélection":id.startsWith("pkg:")?(state.customNames[id]||id.slice(4)):APPS.find(a=>a.id===id).name;
+const isHard=id=>!!(state.hard[id]||state.hard.phone||(state.hard.custom&&state.custom.includes(id)));
+
+function newDay(){
+  if(state.day===today())return;
+  const kept=state.pauses, bonus=Math.min(kept,5);
+  if(state.nextDaily!=null){state.daily=state.nextDaily;state.nextDaily=null;}
+  state.rays+=bonus; state.pauses=state.daily; state.unlocks={}; state.day=today(); save();
+  say(kept?`Bonjour ! Tes ${plural(kept,"pause")} gardée${kept>1?"s":""} hier t'ont rapporté ${plural(bonus,"rayon")}.`:`Bonjour ! Tes ${plural(state.daily,"pause")} sont de retour.`,"ok");
+}
+
+/* ===================== Météo réelle (Open-Meteo) ===================== */
+const WX={clear:"ensoleillé",partly:"quelques nuages",cloudy:"nuageux",fog:"brumeux",rain:"pluvieux",snow:"neigeux",storm:"orageux"};
+function wxKind(c){if(c===0)return"clear";if(c<=2)return"partly";if(c===3)return"cloudy";if(c===45||c===48)return"fog";
+  if((c>=71&&c<=77)||c===85||c===86)return"snow";if(c>=95)return"storm";return"rain";}
+let wx=null, wxPreview=false;
+try{wx=JSON.parse(localStorage.getItem("sunrise-wx"));}catch(e){}
+async function loadWeather(lat,lon,place){
+  const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,temperature_2m`);
+  if(!r.ok)throw new Error("météo");
+  const d=await r.json();
+  wx={kind:wxKind(d.current.weather_code),temp:Math.round(d.current.temperature_2m),place,lat,lon,at:Date.now()};
+  try{localStorage.setItem("sunrise-wx",JSON.stringify(wx));}catch(e){}
+  wxPreview=false;render();
+}
+function weatherUnavailable(){
+  wxPreview=true;if(!wx||wx.temp==null)wx={kind:wx?.kind||"clear",temp:null,place:null};
+  $("cityBtn").hidden=true;$("cityForm").hidden=true;$("preview").hidden=false;render();
+}
+function refreshWeather(){
+  if(wx&&wx.lat!=null&&!wxPreview){loadWeather(wx.lat,wx.lon,wx.place).catch(weatherUnavailable);return;}
+  if(!navigator.geolocation){$("cityForm").hidden=false;return;}
+  navigator.geolocation.getCurrentPosition(
+    p=>loadWeather(p.coords.latitude.toFixed(2),p.coords.longitude.toFixed(2),null).catch(weatherUnavailable),
+    ()=>{if(wx&&wx.lat!=null)return;$("wtext").textContent="Indique ta ville pour voir la vraie météo.";$("cityForm").hidden=false;},
+    {timeout:8000,maximumAge:1800000});
+}
+$("cityBtn").onclick=()=>{$("cityForm").hidden=!$("cityForm").hidden;if(!$("cityForm").hidden)$("cityInput").focus();};
+$("cityForm").onsubmit=async e=>{
+  e.preventDefault();const q=$("cityInput").value.trim();if(!q)return;
+  $("wtext").textContent="Je cherche ta ville…";
+  try{const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=fr`);
+    const d=await r.json();const c=d.results&&d.results[0];
+    if(!c){$("wtext").textContent="Ville introuvable. Vérifie l'orthographe.";return;}
+    await loadWeather(c.latitude,c.longitude,c.name);$("cityForm").hidden=true;
+  }catch(err){weatherUnavailable();}
+};
+$("preview").onclick=e=>{const b=e.target.closest("button[data-wx]");if(!b)return;wx={kind:b.dataset.wx,temp:null,place:null};render();};
+function renderWeather(){
+  if(!wx)return;
+  if(wxPreview){$("wtext").textContent="La vraie météo s'affiche dans l'appli installée. Essaie les ambiances :";
+    setHTML($("preview"),Object.entries(WX).map(([k,v])=>`<button data-wx="${k}" aria-pressed="${wx.kind===k}">${v}</button>`).join(""));return;}
+  $("wtext").textContent=`Dehors${wx.place?" à "+wx.place:""} : ${wx.temp}°, ${WX[wx.kind]}.`;
+}
+
+/* ===================== Dessin : personnage ===================== */
+const OUT="#5b4636", SW=1.9;
+const st=`stroke="${OUT}" stroke-width="${SW}" stroke-linejoin="round" stroke-linecap="round"`;
+const BODY="M0 -25A25 25 0 1 1 0 25A25 25 0 1 1 0 -25Z";
+function sunRays(t){
+  let g=[46,40,34].map((r,i)=>`<circle r="${r}" fill="${t.mane}" opacity="${[.1,.14,.18][i]}"/>`).join("");
+  let d="";for(let i=0;i<12;i++){if(i>=5&&i<=7)continue;const a=(i*30-90)*Math.PI/180,r1=31,r2=i%2?37:41;d+=`M${(Math.cos(a)*r1).toFixed(1)} ${(Math.sin(a)*r1).toFixed(1)}L${(Math.cos(a)*r2).toFixed(1)} ${(Math.sin(a)*r2).toFixed(1)}`;}
+  return g+`<path d="${d}" stroke="${OUT}" stroke-width="5.4" stroke-linecap="round"/><path d="${d}" stroke="${t.mane}" stroke-width="3" stroke-linecap="round"/>`;}
+function charSVG(c,work){
+  const t=TINTS[c.tint]||TINTS.soleil, HAIR="#8a5a3c";
+  // couronne de rayons tout doux, seulement sur le haut de la tête
+  const m=sunRays(t);
+  let g=`<g class="breathe"><ellipse cx="0" cy="36" rx="22" ry="4" fill="${OUT}" opacity=".12"/>${m}`;
+  g+=`<ellipse cx="-9" cy="31" rx="6.5" ry="4.2" fill="${t.body}" ${st}/><ellipse cx="9" cy="31" rx="6.5" ry="4.2" fill="${t.body}" ${st}/>`;
+  g+=`<path d="${BODY}" fill="${t.body}" ${st}/>`;
+  g+=`<path d="M-15 -14q6 -7 14 -8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".55"/>`;
+  g+=`<ellipse cx="-13" cy="7" rx="4.2" ry="2.6" fill="#f3998b" opacity=".6"/><ellipse cx="13" cy="7" rx="4.2" ry="2.6" fill="#f3998b" opacity=".6"/>`;
+  g+=work?`<path d="M-11 0q3 2.5 6 0M5 0q3 2.5 6 0" fill="none" ${st}/>`:`<ellipse cx="-7.5" cy="0" rx="2.1" ry="2.8" fill="${OUT}"/><ellipse cx="7.5" cy="0" rx="2.1" ry="2.8" fill="${OUT}"/><circle cx="-6.8" cy="-1.1" r=".75" fill="#fff"/><circle cx="8.2" cy="-1.1" r=".75" fill="#fff"/>`;
+  g+=`<path d="M-3.5 6.5q1.75 2 3.5 0q1.75 2 3.5 0" fill="none" stroke="${OUT}" stroke-width="1.5" stroke-linecap="round"/>`;
+  const H={
+    meche:`<path d="M-2 -25q-7 -12 3 -14q7 0 3 6" fill="${HAIR}" ${st}/>`,
+    frange:`<path d="M-21 -8q0 -19 21 -18q21 -1 21 18q-5 -6 -10.5 -2q-5 -6 -10.5 -1q-5.5 -5 -10.5 1q-5.5 -4 -10.5 2z" fill="${HAIR}" ${st}/>`,
+    chignon:`<circle cy="-31" r="8" fill="${HAIR}" ${st}/><path d="M-18 -13q2 -13 18 -13q16 0 18 13q-18 -7 -36 0z" fill="${HAIR}" ${st}/>`,
+    boucles:[-18,-9,0,9,18].map((x,i)=>`<circle cx="${x}" cy="${-19-(i%2?4:0)-(x===0?3:0)}" r="7" fill="${HAIR}" ${st}/>`).join("")
+  };
+  if(c.hair)g+=H[c.hair]||"";
+  if(c.ears==="casque")g+=`<path d="M-24 -1q0 -31 24 -31q24 0 24 31" fill="none" stroke="${OUT}" stroke-width="4.5"/><path d="M-24 -1q0 -31 24 -31q24 0 24 31" fill="none" stroke="#f2a07b" stroke-width="2"/><rect x="-31" y="-7" width="11" height="16" rx="5" fill="#f2a07b" ${st}/><rect x="20" y="-7" width="11" height="16" rx="5" fill="#f2a07b" ${st}/>`;
+  const G={
+    rondes:`<circle cx="-8" cy="0" r="6.5" fill="#fff" fill-opacity=".3" ${st}/><circle cx="8" cy="0" r="6.5" fill="#fff" fill-opacity=".3" ${st}/><path d="M-1.5 -1h3" ${st}/>`,
+    soleil:`<rect x="-16" y="-6" width="13" height="10" rx="4" fill="#3d3550" ${st}/><rect x="3" y="-6" width="13" height="10" rx="4" fill="#3d3550" ${st}/><path d="M-3 -2h6" ${st}/><path d="M-13 -4h3" stroke="#fff" stroke-width="1.4" opacity=".6"/>`,
+    coeur:`<path d="M-8 6l-6 -6a3.6 3.6 0 0 1 6 -3.6a3.6 3.6 0 0 1 6 3.6z" fill="#f47b9b" ${st}/><path d="M8 6l-6 -6a3.6 3.6 0 0 1 6 -3.6a3.6 3.6 0 0 1 6 3.6z" fill="#f47b9b" ${st}/><path d="M-2 -1h4" ${st}/>`
+  };
+  if(c.glasses)g+=G[c.glasses]||"";
+  const HT={
+    bonnet:`<path d="M-21 -14q2 -22 21 -22q19 0 21 22z" fill="#e98b8b" ${st}/><rect x="-23" y="-18" width="46" height="8" rx="4" fill="#f5b0a8" ${st}/><circle cy="-39" r="5.5" fill="#fff4ea" ${st}/>`,
+    casquette:`<path d="M-20 -15q2 -19 20 -19q18 0 20 19z" fill="#7fa8c9" ${st}/><path d="M13 -16q18 -2 24 4q-11 3 -24 2z" fill="#7fa8c9" ${st}/><circle cy="-34" r="2.2" fill="${OUT}"/>`,
+    bob:`<ellipse cy="-16" rx="31" ry="6.5" fill="#9cbf86" ${st}/><path d="M-18 -17q1 -18 18 -18q17 0 18 18z" fill="#9cbf86" ${st}/>`,
+    fleurs:[-18,-9,0,9,18].map((x,i)=>{const y=-23-(x===0?7:Math.abs(x)===9?4:0),col=["#f7a8c0","#fff4ea","#f7c948","#fff4ea","#f7a8c0"][i];
+      return `<g transform="translate(${x} ${y})">${[0,72,144,216,288].map(a=>`<circle cx="${(Math.cos(a*Math.PI/180)*3.6).toFixed(1)}" cy="${(Math.sin(a*Math.PI/180)*3.6).toFixed(1)}" r="3" fill="${col}" stroke="${OUT}" stroke-width="1.2"/>`).join("")}<circle r="2.1" fill="#f2a07b"/></g>`;}).join("")
+  };
+  if(c.hat)g+=HT[c.hat]||"";
+  const N={
+    noeud:`<path d="M0 20l-10 -6v12zM0 20l10 -6v12z" fill="#e8657a" ${st}/><circle cy="20" r="2.6" fill="#e8657a" ${st}/>`,
+    echarpe:`<path d="M-20 12q20 11 40 0l2 6q-22 11 -44 0z" fill="#d9614e" ${st}/><path d="M11 17l4 14l7 -3l-5 -13z" fill="#d9614e" ${st}/>`,
+    foulard:`<path d="M-17 13q17 8 34 0l-17 16z" fill="#7fa8c9" ${st}/><circle cx="-4" cy="18" r="1.3" fill="#fff"/><circle cx="5" cy="19" r="1.3" fill="#fff"/>`
+  };
+  if(c.neck)g+=N[c.neck]||"";
+  if(work)g+=`<g transform="translate(0 15)"><path d="M-20 -3l20 4l20 -4v14l-20 4l-20 -4z" fill="#fff6ea" ${st}/><path d="M0 1v14" ${st}/><path d="M-15 3l10 2M-15 7l10 2M5 5l10 -2M5 9l10 -2" stroke="#c9b6a6" stroke-width="1.2"/><ellipse cx="-21" cy="5" rx="4.5" ry="3.6" fill="${t.body}" ${st}/><ellipse cx="21" cy="5" rx="4.5" ry="3.6" fill="${t.body}" ${st}/></g>`;
+  else g+=`<ellipse cx="-22" cy="10" rx="4.5" ry="3.6" fill="${t.body}" ${st}/><ellipse cx="22" cy="10" rx="4.5" ry="3.6" fill="${t.body}" ${st}/>`;
+  return g+`</g>`;
+}
+
+/* ===================== Dessin : petit soleil vu de dos (au bureau) ===================== */
+function charBack(c){
+  const t=TINTS[c.tint]||TINTS.soleil, HAIR="#8a5a3c";
+  const m=sunRays(t);
+  let g=`<g class="breathe">${m}<path d="${BODY}" fill="${t.body}" ${st}/>`;
+  g+=`<ellipse cx="-24" cy="6" rx="4.5" ry="3.6" fill="${t.body}" ${st}/><ellipse cx="24" cy="6" rx="4.5" ry="3.6" fill="${t.body}" ${st}/>`;
+  const H={meche:`<path d="M-2 -25q-7 -12 3 -14q7 0 3 6" fill="${HAIR}" ${st}/>`,
+    frange:`<path d="M-22 -2q-2 -26 22 -25q24 -1 22 25q-22 -6 -44 0z" fill="${HAIR}" ${st}/>`,
+    chignon:`<path d="M-21 -4q-1 -23 21 -23q22 0 21 23q-21 -6 -42 0z" fill="${HAIR}" ${st}/><circle cy="-30" r="8" fill="${HAIR}" ${st}/>`,
+    boucles:[-18,-9,0,9,18].map((x,i)=>`<circle cx="${x}" cy="${-18-(i%2?4:0)-(x===0?3:0)}" r="7.5" fill="${HAIR}" ${st}/>`).join("")};
+  if(c.hair)g+=H[c.hair]||"";
+  if(c.ears==="casque")g+=`<path d="M-24 -1q0 -31 24 -31q24 0 24 31" fill="none" stroke="${OUT}" stroke-width="4.5"/><path d="M-24 -1q0 -31 24 -31q24 0 24 31" fill="none" stroke="#f2a07b" stroke-width="2"/><rect x="-31" y="-7" width="11" height="16" rx="5" fill="#f2a07b" ${st}/><rect x="20" y="-7" width="11" height="16" rx="5" fill="#f2a07b" ${st}/>`;
+  const HT={bonnet:`<path d="M-21 -14q2 -22 21 -22q19 0 21 22z" fill="#e98b8b" ${st}/><rect x="-23" y="-18" width="46" height="8" rx="4" fill="#f5b0a8" ${st}/><circle cy="-39" r="5.5" fill="#fff4ea" ${st}/>`,
+    casquette:`<path d="M-20 -15q2 -19 20 -19q18 0 20 19z" fill="#7fa8c9" ${st}/><path d="M-6 -15h12v-4h-12z" fill="#fff" ${st}/>`,
+    bob:`<ellipse cy="-16" rx="31" ry="6.5" fill="#9cbf86" ${st}/><path d="M-18 -17q1 -18 18 -18q17 0 18 18z" fill="#9cbf86" ${st}/>`,
+    fleurs:[-18,-9,0,9,18].map((x,i)=>`<circle cx="${x}" cy="${-23-(x===0?7:Math.abs(x)===9?4:0)}" r="4" fill="${["#f7a8c0","#fff4ea","#f7c948","#fff4ea","#f7a8c0"][i]}" stroke="${OUT}" stroke-width="1.2"/>`).join("")};
+  if(c.hat)g+=HT[c.hat]||"";
+  if(c.neck==="echarpe"||c.neck==="foulard")g+=`<path d="M-20 12q20 8 40 0l1 6q-21 9 -42 0z" fill="${c.neck==="echarpe"?"#d9614e":"#7fa8c9"}" ${st}/>`;
+  return g+`</g>`;
+}
+
+/* ===================== Dessin : la chambre, vue de face ===================== */
+const WB={x:22,y:46,w:92,h:104}; // la fenêtre
+function phase(){
+  const h=new Date().getHours(),X=WB.x,Y=WB.y;
+  if(h>=7&&h<10)return{key:"aube",label:"l'aube",sky:["#ffb9a3","#ffe6b8"],sun:"#ffcf6b",x:X+26,y:Y+76};
+  if(h>=10&&h<17)return{key:"midi",label:"le plein jour",sky:["#a9d6ee","#e9f6fd"],sun:"#ffd23f",x:X+56,y:Y+32};
+  if(h>=17&&h<21)return{key:"golden",label:"la golden hour",sky:["#ff9e5c","#ffd99e"],sun:"#ffb43f",x:X+66,y:Y+74};
+  return{key:"nuit",label:"la nuit",sky:["#2b2756","#4f437c"],sun:"#fff1bf",x:X+56,y:Y+32};
+}
+function cloud(x,y,k,f){return `<g transform="translate(${x} ${y}) scale(${k})" fill="${f}" stroke="${OUT}" stroke-width="2"><path d="M-12 8a10 10 0 0 1 2 -14a13 13 0 0 1 22 -4a10 10 0 0 1 14 9a8 8 0 0 1 -2 9z"/></g>`;}
+function weatherLayer(night){
+  const k=wx?wx.kind:"clear",X=WB.x,Y=WB.y,W=WB.w,Hh=WB.h;let back="",front="";
+  const veil={cloudy:["#b9bfcc",.35],rain:["#8f98aa",.42],storm:["#3e3a52",.5],fog:["#f4f1ec",.55],snow:["#eef2f8",.25]}[k];
+  if(veil)back+=`<rect x="${X}" y="${Y}" width="${W}" height="${Hh}" fill="${veil[0]}" opacity="${veil[1]}"/>`;
+  const cf=night?"#6a5f97":(k==="storm"?"#9a96a8":["rain","cloudy"].includes(k)?"#dde0e8":"#ffffff");
+  if(k==="partly")back+=cloud(X+22,Y+28,.6,cf);
+  if(["cloudy","rain","storm","snow"].includes(k))front+=cloud(X+18,Y+24,.65,cf)+cloud(X+64,Y+52,.55,cf)+cloud(X+44,Y+12,.45,cf);
+  if(k==="rain"||k==="storm")for(let i=0;i<11;i++){const x=X+5+i*8.5;front+=`<line class="drop" style="animation-delay:-${(i%5)*.17}s" x1="${x}" y1="${Y+10+(i%4)*7}" x2="${x-2.5}" y2="${Y+18+(i%4)*7}" stroke="#6f90bd" stroke-width="1.6" stroke-linecap="round"/>`;}
+  if(k==="storm")front+=`<path d="M${X+50} ${Y+26}l-7 15h6l-5 14l13 -19h-7l5 -10z" fill="#ffe27a" stroke="${OUT}" stroke-width="1.2"/>`;
+  if(k==="snow")for(let i=0;i<16;i++)front+=`<circle class="flake" style="animation-delay:-${(i*.7)%7}s" cx="${X+4+(i*37)%(W-8)}" cy="${Y+6+(i*13)%40}" r="${i%3?1.3:1.9}" fill="#fff"/>`;
+  if(k==="fog")front+=`<g stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"><path d="M${X+8} ${Y+66}h40M${X+30} ${Y+80}h50M${X+10} ${Y+94}h40"/></g>`;
+  return{back,front};
+}
+function room(work){
+  const p=phase(),t=THEMES[state.theme],sh=state.shown,night=p.key==="nuit",wl=weatherLayer(night),X=WB.x,Y=WB.y;
+  const dim=wx&&["cloudy","rain","storm","fog","snow"].includes(wx.kind)?.5:1;
+  const nR=Math.max(5,Math.min(12,state.daily||5)),lit=state.daily?Math.round(state.pauses/state.daily*nR):0;
+  const rays=Array.from({length:nR},(_,i)=>{const a=(-90+i*360/nR)*Math.PI/180;
+    return `<line x1="${(p.x+Math.cos(a)*11).toFixed(1)}" y1="${(p.y+Math.sin(a)*11).toFixed(1)}" x2="${(p.x+Math.cos(a)*18).toFixed(1)}" y2="${(p.y+Math.sin(a)*18).toFixed(1)}" stroke="${p.sun}" stroke-width="3.4" stroke-linecap="round" opacity="${i<lit?1:.2}"/>`;}).join("");
+  const sky=night?`<circle cx="${p.x}" cy="${p.y}" r="8" fill="${p.sun}"/><circle cx="${p.x+4}" cy="${p.y-3}" r="7" fill="#363062"/><g fill="#fff8dc">${[[12,18],[80,24],[20,60],[74,70],[40,10]].map(([a,b])=>`<circle cx="${X+a}" cy="${Y+b}" r="1"/>`).join("")}</g>`
+    :`<circle cx="${p.x}" cy="${p.y}" r="16" fill="${p.sun}" opacity=".25"/><circle cx="${p.x}" cy="${p.y}" r="8" fill="${p.sun}" stroke="${OUT}" stroke-width="1.4"/>`;
+  const shadow=(cx,cy,rx,ry)=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#3a2a1e" opacity=".22" filter="url(#soft)"/>`;
+  let lights=""; // les lumières sont redessinées par-dessus l'éclairage de la pièce (la nuit, elles brillent)
+  const FLOOR=238;
+  let s=`<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.sky[0]}"/><stop offset="1" stop-color="${p.sky[1]}"/></linearGradient>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t.wall}"/><stop offset="1" stop-color="${t.wall2}"/></linearGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${p.sun}" stop-opacity=".9"/><stop offset="1" stop-color="${p.sun}" stop-opacity="0"/></linearGradient>
+    <clipPath id="win"><rect x="${X}" y="${Y}" width="${WB.w}" height="${WB.h}"/></clipPath>
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="1.3"/></filter>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="2"/><feColorMatrix values="0 0 0 0 0.36  0 0 0 0 0.27  0 0 0 0 0.2  0 0 0 0.1 0"/></filter>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="soft" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="2.2"/></filter>
+    <filter id="bigglow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="9"/></filter>
+    <pattern id="wp" width="18" height="18" patternUnits="userSpaceOnUse"><path d="M4 4l1.5 1.5M13 13l1.5 1.5" stroke="${OUT}" stroke-width="1" opacity=".09" stroke-linecap="round"/><circle cx="13" cy="5" r=".8" fill="${OUT}" opacity=".07"/><circle cx="5" cy="13" r=".8" fill="${OUT}" opacity=".07"/></pattern>
+    <pattern id="plaid" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#f6dc9a"/><rect x="5" width="5" height="16" fill="#9fc58a" opacity=".55"/><rect y="5" width="16" height="5" fill="#9fc58a" opacity=".45"/><path d="M12.5 0v16M0 12.5h16" stroke="#fffaf2" stroke-width="1" opacity=".7"/></pattern>
+    <linearGradient id="floorg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t.floor2}"/><stop offset=".4" stop-color="${t.floor}"/><stop offset="1" stop-color="${t.floor}"/></linearGradient>
+    <linearGradient id="woodg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset="1" stop-color="#3a2a1e" stop-opacity=".12"/></linearGradient>
+    <linearGradient id="ao" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2a1e" stop-opacity="0"/><stop offset="1" stop-color="#3a2a1e" stop-opacity=".2"/></linearGradient>
+    <linearGradient id="fold" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a2a1e" stop-opacity=".18"/><stop offset=".35" stop-color="#3a2a1e" stop-opacity="0"/><stop offset=".6" stop-color="#fff" stop-opacity=".2"/><stop offset=".8" stop-color="#3a2a1e" stop-opacity="0"/><stop offset="1" stop-color="#3a2a1e" stop-opacity=".2"/></linearGradient>
+    <radialGradient id="warm" cx=".17" cy=".35" r=".7"><stop offset="0" stop-color="${p.sun}" stop-opacity="${night?0:.22*dim}"/><stop offset="1" stop-color="${p.sun}" stop-opacity="0"/></radialGradient>
+    <radialGradient id="vig" cx=".5" cy=".45" r=".8"><stop offset=".55" stop-color="#3a2a1e" stop-opacity="0"/><stop offset="1" stop-color="#3a2a1e" stop-opacity=".28"/></radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#wall)"/><rect width="400" height="${FLOOR}" fill="url(#wp)"/>
+  <rect y="${FLOOR-26}" width="400" height="26" fill="url(#ao)"/>
+  <g filter="url(#rough)">
+  <path d="M0 ${FLOOR}H400V300H0Z" fill="url(#floorg)"/>
+  <path d="${(()=>{let d="";for(let r=0;r<3;r++){const y0=[244,266,290][r];for(let i=0;i<9;i++){const x=(i*53+r*29)%400;d+=`M${x} ${y0+(i%3)}q12 -2 24 0`;}}return d;})()}" stroke="#3a2a1e" stroke-width=".8" opacity=".18" fill="none"/>
+  <ellipse cx="170" cy="${FLOOR+30}" rx="90" ry="12" fill="#fff" opacity="${night?0:.12*dim}" filter="url(#soft)"/>
+  <path d="M0 ${FLOOR}H400" stroke="${OUT}" stroke-width="${SW}"/><path d="M0 ${FLOOR-4}H400" stroke="#fffaf2" stroke-width="4" opacity=".7"/><path d="M0 ${FLOOR-6}H400" stroke="${OUT}" stroke-width="1" opacity=".5"/>
+  <path d="M0 260H400M0 284H400M40 238v22M150 238v22M270 238v22M370 238v22M90 260v24M210 260v24M330 260v24M20 284v16M140 284v16M250 284v16M360 284v16" stroke="${OUT}" stroke-width="1" opacity=".35" fill="none"/>
+  <g clip-path="url(#win)"><rect x="${X}" y="${Y}" width="${WB.w}" height="${WB.h}" fill="url(#sky)"/>${wl.back}${sky}${rays}
+    <path d="M${X} ${Y+92}q22 -12 46 -4t46 -6V${Y+WB.h}H${X}z" fill="${night?"#3f3670":(wx?.kind==="snow"?"#f4f7fb":"#bcd8a4")}" ${st}/>${wl.front}<path d="M${X+8} ${Y+WB.h}L${X+40} ${Y}h10L${X+18} ${Y+WB.h}z" fill="#fff" opacity=".18"/><path d="M${X+54} ${Y+WB.h}L${X+80} ${Y}h5L${X+59} ${Y+WB.h}z" fill="#fff" opacity=".14"/><rect x="${X}" y="${Y}" width="${WB.w}" height="5" fill="#3a2a1e" opacity=".15"/></g>
+  <rect x="${X-5}" y="${Y-5}" width="${WB.w+10}" height="${WB.h+10}" rx="2" fill="none" stroke="#fffaf2" stroke-width="7"/><rect x="${X-8.5}" y="${Y-8.5}" width="${WB.w+17}" height="${WB.h+17}" rx="3" fill="none" ${st}/><rect x="${X}" y="${Y}" width="${WB.w}" height="${WB.h}" fill="none" ${st}/>
+  <path d="M${X+WB.w/2} ${Y}V${Y+WB.h}" stroke="#fffaf2" stroke-width="4"/><path d="M${X+WB.w/2} ${Y}V${Y+WB.h}" stroke="${OUT}" stroke-width="1" opacity=".5"/>
+  <rect x="${X-10}" y="${Y+WB.h+16}" width="${WB.w+20}" height="5" fill="#3a2a1e" opacity=".14" filter="url(#soft)"/><rect x="${X-12}" y="${Y+WB.h+8}" width="${WB.w+24}" height="7" rx="2" fill="#fffaf2" ${st}/>
+  <polygon points="${X},${Y+WB.h+12} ${X+WB.w},${Y+WB.h+12} 250,${FLOOR+40} 90,${FLOOR+40}" fill="url(#beam)" opacity="${night?0.03:((0.06+0.22*(state.daily?state.pauses/state.daily:0))*dim).toFixed(2)}"/>
+  ${(()=>{const top=Y-14,T=Y+60,B=Y+WB.h+16;
+    const cur=(o,d)=>{const k=v=>o+d*v;let hem="";for(let i=0;i<4;i++)hem+=`q${-d*3.5} 4.5 ${-d*7} 0`;
+      return `M${k(-2)} ${top}L${k(30)} ${top}Q${k(22)} ${T-24} ${k(15)} ${T}Q${k(18)} ${T+30} ${k(28)} ${B}${hem}L${k(0)} ${B}Q${k(-4)} ${T} ${k(-2)} ${top}Z`;};
+    const L1=cur(X-15,1),R1=cur(X+WB.w+15,-1);
+    const folds=(o,d)=>`M${o+d*8} ${top+2}q${d*2} 30 ${d*6} ${T-top-4}M${o+d*17} ${top+2}q${-d*1} 28 ${d*1} ${T-top-6}M${o+d*8} ${T+6}q${-d*2} 20 ${d*2} ${B-T-8}M${o+d*18} ${T+6}q${d*2} 20 ${d*4} ${B-T-8}`;
+    const tie=(o,d)=>{const a=o+d*-5,b=o+d*18;return `<path d="M${a} ${T-3}Q${(a+b)/2} ${T+1} ${b} ${T-3}L${b} ${T+4}Q${(a+b)/2} ${T+8} ${a} ${T+4}Z" fill="#e9a1b5" ${st}/><path d="M${a} ${T+0.5}Q${(a+b)/2} ${T+4.5} ${b} ${T+0.5}" stroke="#fff" stroke-width=".8" opacity=".5" fill="none"/><circle cx="${o+d*-6}" cy="${T+0.5}" r="3.2" fill="#f6c7c0" ${st}/><path d="M${o+d*-6} ${T+3.5}l${-d*2} 8M${o+d*-6} ${T+3.5}l${d*1.5} 8" stroke="#e9a1b5" stroke-width="2.2" stroke-linecap="round"/>`;};
+    const rod=`<path d="M${X-24} ${top-2}H${X+WB.w+24}" stroke="${OUT}" stroke-width="3.4" stroke-linecap="round"/><path d="M${X-24} ${top-2}H${X+WB.w+24}" stroke="${t.wood}" stroke-width="1.5" stroke-linecap="round"/><circle cx="${X-26}" cy="${top-2}" r="3.6" fill="${t.wood}" ${st}/><circle cx="${X+WB.w+26}" cy="${top-2}" r="3.6" fill="${t.wood}" ${st}/>`;
+    const rings=[2,10,18,26].map(v=>`<circle cx="${X-15+v}" cy="${top}" r="2" fill="none" stroke="${OUT}" stroke-width="1"/><circle cx="${X+WB.w+15-v}" cy="${top}" r="2" fill="none" stroke="${OUT}" stroke-width="1"/>`).join("");
+    return rod+[L1,R1].map(d=>`<path d="${d}" fill="url(#plaid)" ${st}/><path d="${d}" fill="url(#fold)"/>`).join("")
+      +`<path d="${folds(X-15,1)}${folds(X+WB.w+15,-1)}" stroke="${OUT}" stroke-width=".9" opacity=".35" fill="none"/>`+tie(X-15,1)+tie(X+WB.w+15,-1)+rings;})()}`;
+  const GD="M10 10Q200 62 390 10", GD2="M10 10Q118 58 236 6Q316 30 390 10", gpt=i=>{const t=i/14,u=1-t;return[u*u*10+2*u*t*200+t*t*390,u*u*10+2*u*t*62+t*t*10];};
+  if(sh.guirlande&&night)lights+=`<path d="${GD2}" fill="none" stroke="#ffe28a" stroke-width="10" opacity=".35" filter="url(#bigglow)"/>`;
+  if(sh.guirlande){
+    const star=(x,y,c)=>`<circle cx="${x.toFixed(1)}" cy="${(y+5).toFixed(1)}" r="6" fill="${c}" opacity=".45" filter="url(#glow)"/><path transform="translate(${x.toFixed(1)} ${(y+5).toFixed(1)}) scale(.9)" d="M0 -6l1.8 3.8l4.2 .6l-3 3l.7 4.2l-3.7 -2l-3.7 2l.7 -4.2l-3 -3l4.2 -.6z" fill="${c}" stroke="${OUT}" stroke-width="1"/>`;
+    // deuxième guirlande : un clou en plus au milieu, deux arrondis de taille différente
+    const q=(x0,y0,cx,cy,x1,y1,n)=>Array.from({length:n},(_,i)=>{const t=(i+1)/(n+1),u=1-t;return[u*u*x0+2*u*t*cx+t*t*x1,u*u*y0+2*u*t*cy+t*t*y1];});
+    s+=`<path d="${GD2}" fill="none" stroke="${OUT}" stroke-width="1.1"/>`+[...q(10,10,118,58,236,6,9),...q(236,6,316,30,390,10,5)].map(([x,y],i)=>star(x,y-1,i%2?"#fff6d6":"#ffd56b")).join("")+`<circle cx="236" cy="6" r="2.8" fill="#c9b6a6" ${st}/>`;
+    s+=[[10,10],[390,10]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.8" fill="#c9b6a6" ${st}/>`).join("");}
+  if(sh.horloge)s+=`<circle cx="166" cy="62" r="20" fill="#9fc0a8" ${st}/><circle cx="166" cy="62" r="15" fill="#fffaf2" ${st}/>${(()=>{const d=new Date(),h=(d.getHours()%12+d.getMinutes()/60)*30,m=d.getMinutes()*6,r=a=>a*Math.PI/180;let ticks="";for(let i=0;i<12;i++){const a=r(i*30);ticks+=`M${(166+Math.sin(a)*11.5).toFixed(1)} ${(62-Math.cos(a)*11.5).toFixed(1)}L${(166+Math.sin(a)*13.5).toFixed(1)} ${(62-Math.cos(a)*13.5).toFixed(1)}`;}return `<path d="${ticks}" stroke="${OUT}" stroke-width="1"/><path d="M166 62L${(166+Math.sin(r(h))*7).toFixed(1)} ${(62-Math.cos(r(h))*7).toFixed(1)}M166 62L${(166+Math.sin(r(m))*11).toFixed(1)} ${(62-Math.cos(r(m))*11).toFixed(1)}" ${st}/>`;})()}`;
+  if(sh.tableau)s+=`<rect x="198" y="40" width="40" height="32" fill="#a37a55" ${st}/><rect x="202" y="44" width="32" height="24" fill="#d5ebf3"/><path d="M202 62q8 -9 16 -4t16 -5V68H202z" fill="#9fc58a" ${st}/><circle cx="226" cy="50" r="3" fill="#f7c948"/><rect x="246" y="46" width="22" height="30" fill="#f6c7c0" ${st}/><path d="M257 70v-12M257 62q-5 -2 -5 -7q5 1 5 7q0 -6 5 -7q0 5 -5 7" stroke="#7fae6a" stroke-width="1.2" fill="#9fc58a"/>`;
+  if(sh.posters)s+=`<rect x="200" y="82" width="22" height="26" fill="#fffaf2" ${st} transform="rotate(-4 211 95)"/><path d="M204 92h14M204 97h10M204 102h12" stroke="${OUT}" stroke-width="1" opacity=".5"/><rect x="208" y="78" width="7" height="4" fill="#f7c948" opacity=".8"/><rect x="230" y="86" width="18" height="18" fill="#9fc0a8" ${st}/><path d="M233 98q3 3 6 0" stroke="#fffaf2" stroke-width="1.2" fill="none"/><rect x="252" y="84" width="16" height="20" fill="#fffaf2" ${st} transform="rotate(5 260 94)"/><rect x="255" y="87" width="10" height="10" fill="#f2a07b"/>`;
+  if(sh.etagere)s+=`<rect x="290" y="62" width="88" height="6" rx="2" fill="#f6e7d2" ${st}/><path d="M300 68q0 10 8 10M368 68q0 10 -8 10" stroke="${OUT}" stroke-width="1.6" fill="none"/><path d="M296 62h16l-2 -14h-12z" fill="#fffaf2" ${st}/><path d="M304 48q-10 -10 -6 -22q8 6 6 22q0 -16 12 -20q2 12 -12 20" fill="#8fbf7a" ${st}/><path d="M322 62h12l-2 -10h-8z" fill="#e58d6c" ${st}/><path d="M328 52v-14M328 44q-6 -2 -6 -8q6 2 6 8q0 -7 6 -8q0 6 -6 8" stroke="#6f8f5a" stroke-width="1.2" fill="#9fc58a"/><rect x="340" y="46" width="32" height="16" rx="4" fill="#f6e7d2" ${st}/><circle cx="350" cy="54" r="4.5" fill="none" ${st}/><path d="M360 50h8M360 54h8M360 58h8" stroke="${OUT}" stroke-width="1"/><path d="M368 46l4 -18" ${st}/>`;
+  if(sh.bibliotheque){
+    const B0=96,BL=304,BR=396,sh2=[128,160,192,FLOOR-6];
+    s+=shadow(350,FLOOR+2,50,4)+`<rect x="${BL}" y="${B0}" width="${BR-BL}" height="${FLOOR-B0}" fill="${t.wood}" ${st}/><rect x="${BL+5}" y="${B0+4}" width="${BR-BL-10}" height="${FLOOR-B0-12}" fill="#3a2a1e" opacity=".24"/>
+    <rect x="${BL-4}" y="${B0-7}" width="${BR-BL+8}" height="8" rx="2" fill="${t.wood}" ${st}/><path d="M${BL-2} ${B0-5}H${BR+2}" stroke="#fff" stroke-width="1" opacity=".35"/>
+    <rect x="${BL-2}" y="${FLOOR-6}" width="${BR-BL+4}" height="8" fill="${t.wood}" ${st}/><path d="M${BL+5} ${B0}V${FLOOR-6}M${BR-5} ${B0}V${FLOOR-6}" stroke="${OUT}" stroke-width="1.2" opacity=".6"/>`;
+    sh2.slice(0,3).forEach(y=>s+=`<rect x="${BL+5}" y="${y}" width="${BR-BL-10}" height="5" fill="${t.wood}" ${st}/><path d="M${BL+5} ${y+5}H${BR-5}" stroke="#3a2a1e" stroke-width="2" opacity=".18"/>`);
+    const cols=["#f2a07b","#9fc58a","#7fa8c9","#f7c948","#e9a1b5","#fffaf2","#c9b6e4","#d98c7c"];
+    const book=(x,y,h,w,c)=>`<rect x="${x}" y="${y-h}" width="${w}" height="${h}" rx=".8" fill="${c}" stroke="${OUT}" stroke-width="1.1"/><path d="M${x+1} ${y-h+3}h${w-2}M${x+1} ${y-4}h${w-2}" stroke="#3a2a1e" stroke-width=".7" opacity=".35"/>`;
+    const row=(y,x0,x1,seed)=>{let x=x0,o="",i=0;while(x<x1-5){const w=Math.min(5+((i+seed)*7)%4,x1-x);if(w<4)break;o+=book(x,y,17+((i+seed)*5)%8,w,cols[(i+seed)%8]);x+=w;i++;}return o;};
+    // étage 1 : livres + plante
+    s+=row(128,BL+7,364,0)+`<path d="M368 128h18l-2 -12h-14z" fill="#e58d6c" stroke="${OUT}" stroke-width="1.1"/><path d="M377 116q-7 -6 -5 -13q7 3 5 13q0 -9 8 -11q1 7 -8 11" fill="#8fbf7a" stroke="${OUT}" stroke-width="1.1"/><path d="M370 116q-6 2 -10 8" stroke="#7fae6a" stroke-width="1.6" fill="none"/>`;
+    // étage 2 : livres penchés + globe
+    s+=row(160,BL+7,346,3)+`<path d="M346 160l8 -18l5 2l-8 16z" fill="#c9b6e4" stroke="${OUT}" stroke-width="1.1"/><circle cx="374" cy="148" r="8" fill="#9fc0dd" stroke="${OUT}" stroke-width="1.1"/><path d="M370 144q4 2 3 6M376 146q2 4 0 6" stroke="#7fae6a" stroke-width="1.6" fill="none"/><path d="M366 148a8 8 0 0 0 16 0" fill="none" stroke="${OUT}" stroke-width="1" opacity=".6"/><path d="M374 156v3M368 160h12" stroke="${OUT}" stroke-width="1.2"/>`;
+    // étage 3 : platine ou boîte + livres
+    s+=(sh.platine?`<rect x="${BL+8}" y="174" width="46" height="18" rx="2" fill="#c9935f" stroke="${OUT}" stroke-width="1.1"/><path d="M${BL+8} 183h46" stroke="${OUT}" stroke-width=".8" opacity=".5"/><ellipse cx="${BL+28}" cy="176.5" rx="13" ry="3" fill="#3d3550" stroke="${OUT}" stroke-width="1"/><circle cx="${BL+28}" cy="176.5" r="1.4" fill="#f2a07b"/><path d="M${BL+48} 174l-7 4" stroke="${OUT}" stroke-width="1.2"/>`
+      :`<rect x="${BL+8}" y="176" width="44" height="16" rx="2" fill="#f6e7d2" stroke="${OUT}" stroke-width="1.1"/><path d="M${BL+24} 182h12" stroke="${OUT}" stroke-width="1.6" stroke-linecap="round"/>`)+row(192,BL+56,BR-7,5);
+    // étage 4 : livres + panier
+    s+=row(FLOOR-6,BL+7,354,1)+`<path d="M356 ${FLOOR-6}l2 -18h28l2 18z" fill="#d9b48a" stroke="${OUT}" stroke-width="1.1"/><path d="M358 ${FLOOR-18}h28M357 ${FLOOR-12}h30M364 ${FLOOR-24}v18M372 ${FLOOR-24}v18M380 ${FLOOR-24}v18" stroke="${OUT}" stroke-width=".8" opacity=".5"/><path d="M362 ${FLOOR-24}q10 -10 20 0" fill="none" stroke="${OUT}" stroke-width="1.4"/>`;
+    s+=`<path d="M${BL+2} ${FLOOR+2}v4M${BR-2} ${FLOOR+2}v4" stroke="${OUT}" stroke-width="3" stroke-linecap="round"/>`;
+  }
+  // --- guirlandes en plus ---
+  const bulb=(x,y,c)=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${c}" opacity=".45" filter="url(#glow)"/><ellipse cx="${x.toFixed(1)}" cy="${(y+1.5).toFixed(1)}" rx="2.2" ry="3" fill="${c}" stroke="${OUT}" stroke-width=".9"/><rect x="${(x-1.4).toFixed(1)}" y="${(y-2.6).toFixed(1)}" width="2.8" height="1.8" fill="#8a7a6a"/>`;
+  const BC=["#ffe28a","#ffc2c2","#c8ecff","#d6f0b8"];
+  if(sh.guirlandefen){const top=Y-16,L0=X-24,R0=X+WB.w+24;let d=`M${L0} ${top}`,pts=[];
+    for(let i=0;i<4;i++){const x0=L0+i*(R0-L0)/4,x1=L0+(i+1)*(R0-L0)/4;d+=`Q${(x0+x1)/2} ${top+18} ${x1} ${top}`;for(let j=1;j<4;j++){const tt=j/4,u=1-tt;pts.push([u*u*x0+2*u*tt*(x0+x1)/2+tt*tt*x1,u*u*top+2*u*tt*(top+18)+tt*tt*top]);}}
+    const side=(x)=>{let o=`M${x} ${top}`;for(let j=1;j<=6;j++)o+=`Q${x+(j%2?5:-5)} ${top+j*20-10} ${x} ${top+j*20}`;return o;};
+    s+=`<path d="${d}${side(L0+2)}${side(R0-2)}" fill="none" stroke="${OUT}" stroke-width="1"/>`;
+    for(let j=1;j<=6;j++){pts.push([L0+2+(j%2?3:-3),top+j*20-10]);pts.push([R0-2+(j%2?3:-3),top+j*20-10]);}
+    pts.forEach(([x,y],i)=>s+=bulb(x,y+3,BC[i%4]));
+    if(night)lights+=pts.map(([x,y],i)=>`<circle cx="${x.toFixed(1)}" cy="${(y+4).toFixed(1)}" r="7" fill="${BC[i%4]}" opacity=".55" filter="url(#glow)"/>`).join("");}
+  if(sh.fanions){const L0=180,R0=258,y0=104,sag=8;
+    s+=`<path d="M${L0} ${y0}Q${(L0+R0)/2} ${y0+sag*2} ${R0} ${y0}" fill="none" stroke="${OUT}" stroke-width=".9"/><circle cx="${L0}" cy="${y0}" r="1.6" fill="#c9b6a6" stroke="${OUT}" stroke-width="1"/><circle cx="${R0}" cy="${y0}" r="1.6" fill="#c9b6a6" stroke="${OUT}" stroke-width="1"/>`;
+    const FC=["#f7b7a3","#fbe39a","#bfe0b0","#b9d7ee","#f6c1d4","#fbe39a","#bfe0b0","#f7b7a3","#d9c9ef","#f6c1d4"],n=FC.length;
+    for(let i=0;i<n;i++){const tt=(i+.5)/n,u=1-tt,x=u*u*L0+2*u*tt*(L0+R0)/2+tt*tt*R0,y=u*u*y0+2*u*tt*(y0+sag*2)+tt*tt*y0,
+      dy=(1-tt)*tt*sag*4*.18,ang=((tt-.5)*-22).toFixed(1);
+      s+=`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${ang})"><path d="M-3.4 0L3.4 0L0.4 7.2Q0 7.9 -0.4 7.2Z" fill="${FC[i]}" stroke="${OUT}" stroke-width=".8" stroke-linejoin="round"/>${i%2?`<circle cx="0" cy="2.4" r=".8" fill="#fffaf2"/>`:`<path d="M-1.6 1.6h3.2" stroke="#fffaf2" stroke-width=".8" stroke-linecap="round"/>`}</g>`;}}
+  if(sh.guirlandebib&&sh.bibliotheque){let d="M302 92",pts=[];const xs=[302,316,330,344,358,372,386,398];
+    for(let i=0;i<xs.length-1;i++){const x0=xs[i],x1=xs[i+1];d+=`Q${(x0+x1)/2} ${100} ${x1} 92`;pts.push([(x0+x1)/2,96]);}
+    d+=`M398 92Q404 140 396 190Q402 220 396 ${FLOOR-6}`;[[400,116],[399,140],[398,166],[399,200],[398,222]].forEach(q=>pts.push(q));
+    s+=`<path d="${d}" fill="none" stroke="${OUT}" stroke-width="1"/>`;pts.forEach(([x,y],i)=>s+=bulb(x,y,BC[(i+1)%4]));
+    if(night)lights+=pts.map(([x,y],i)=>`<circle cx="${x}" cy="${y+1}" r="7" fill="${BC[(i+1)%4]}" opacity=".55" filter="url(#glow)"/>`).join("");}
+  if(sh.monstera)s+=shadow(36,FLOOR+20,24,4)+`<path d="M22 ${FLOOR+20}h28l-4 -30h-20z" fill="#f6e7d2" ${st}/><path d="M30 ${FLOOR+20}l-2 6M44 ${FLOOR+20}l2 6" ${st}/><path d="M36 ${FLOOR-10}q-26 -10 -24 -42q18 10 24 42q-6 -38 14 -58q12 26 -14 58q14 -28 32 -30q-2 24 -32 30" fill="#7fae6a" ${st}/>`;
+  // tapis
+  s+=sh.tapisdoux?`<path d="M96 288L132 248H300L330 288Z" fill="#e38a7a" ${st}/><path d="M108 284L138 252H294L318 284Z" fill="none" stroke="#fffaf2" stroke-width="1.6"/><path d="M150 252l-10 32M180 252l-6 32M210 252l-2 32M240 252l2 32M270 252l6 32M126 268H306" stroke="#f6b2a4" stroke-width="2"/>`
+    :`<ellipse cx="212" cy="270" rx="100" ry="14" fill="#e8c9a6" ${st}/>`;
+  // bureau
+  s+=shadow(206,FLOOR+3,100,5)+`<rect x="176" y="186" width="114" height="${FLOOR-186}" fill="#3a2a1e" opacity=".2"/>
+  <rect x="116" y="166" width="184" height="9" rx="2" fill="${t.wood}" ${st}/><rect x="116" y="166" width="184" height="9" rx="2" fill="url(#woodg)"/><path d="M118 167.5H298" stroke="#fff" stroke-width="1" opacity=".35"/>
+  <path d="M130 170q20 -1.5 40 0t40 0M220 171q20 -1.5 40 0t36 0" stroke="#3a2a1e" stroke-width=".7" opacity=".25" fill="none"/>
+  <rect x="122" y="175" width="54" height="${FLOOR-175+2}" fill="${t.wood}" ${st}/><rect x="122" y="175" width="54" height="${FLOOR-175+2}" fill="url(#woodg)"/>
+  ${[175,198,220].map(y=>`<rect x="125" y="${y+3}" width="48" height="${y===220?FLOOR-y-4:17}" rx="1.5" fill="none" stroke="${OUT}" stroke-width="1" opacity=".55"/><path d="M130 ${y+9}q12 -1 22 0t16 0" stroke="#3a2a1e" stroke-width=".6" opacity=".25" fill="none"/>`).join("")}
+  <path d="M122 198H176M122 220H176" ${st}/>${[186,209,230].map(y=>`<rect x="141" y="${y-2}" width="16" height="4" rx="2" fill="#e8d6b8" stroke="${OUT}" stroke-width="1.3"/>`).join("")}
+  <rect x="176" y="175" width="118" height="12" fill="${t.wood}" ${st} opacity=".9"/><rect x="180" y="178" width="60" height="6" rx="1.5" fill="none" stroke="${OUT}" stroke-width="1" opacity=".5"/><rect x="204" y="180" width="12" height="2.5" rx="1.2" fill="#e8d6b8"/><path d="M290 175V${FLOOR+2}" stroke="${OUT}" stroke-width="5" stroke-linecap="round"/><path d="M290 175V${FLOOR+2}" stroke="${t.wood}" stroke-width="2.4" stroke-linecap="round"/>`;
+  // ordinateur portable
+  s+=`<rect x="180" y="126" width="56" height="38" rx="3" fill="#f6e7d2" ${st}/><rect x="184" y="130" width="48" height="30" rx="1.5" fill="${work?"#fff8d8":"#e7eef2"}" ${st}/>${work?`<rect x="184" y="130" width="48" height="30" fill="#fff3b0" opacity=".6" filter="url(#glow)"/><path d="M190 138h26M190 144h34M190 150h20" stroke="#c9b6a6" stroke-width="1.6" stroke-linecap="round"/>`:`<circle cx="208" cy="143" r="5" fill="#f7c948" stroke="${OUT}" stroke-width="1.2"/>`}<path d="M174 166h68l-4 -3h-60z" fill="#e9dcc8" ${st}/><path d="M186 131l14 0l-10 28h-6z" fill="#fff" opacity=".25"/><circle cx="208" cy="128.2" r=".8" fill="${OUT}"/>`;
+  if(work)lights+=`<ellipse cx="208" cy="150" rx="40" ry="26" fill="#fff3b0" opacity="${night?.35:.15}" filter="url(#bigglow)"/>`;
+  if(sh.lampe)lights+=`<ellipse cx="138" cy="160" rx="34" ry="22" fill="#ffd77a" opacity="${night?.55:.25}" filter="url(#bigglow)"/>`;
+  if(sh.lampe)s+=`<circle cx="138" cy="146" r="22" fill="#ffe7a3" opacity="${night?.7:.4}" filter="url(#glow)"/><path d="M130 166h16" ${st}/><path d="M138 166v-16" ${st}/><path d="M126 150h24l-5 -14h-14z" fill="#f6c7c0" ${st}/>`;
+  if(sh.tasse)s+=`<path d="M252 152h13v10a3 3 0 0 1 -3 3h-7a3 3 0 0 1 -3 -3z" fill="#fffaf2" ${st}/><path d="M265 155h2.5a3 3 0 0 1 0 6h-2.5" fill="none" ${st}/><path d="M256 148q-2.5 -3.5 0 -7M261 148q-2.5 -3.5 0 -7" stroke="#b9a596" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
+  if(sh.crayons)s+=`<rect x="272" y="150" width="14" height="16" rx="2" fill="#9fc0a8" ${st}/><path d="M275 150l-3 -12M279 150v-14M283 150l3 -11" stroke="${OUT}" stroke-width="1.8"/><path d="M276 140q-8 -6 -6 -14q6 4 6 14q2 -10 10 -12q0 8 -10 12" fill="#8fbf7a" stroke="${OUT}" stroke-width="1.2"/>`;
+  if(sh.plante)s+=`<path d="M148 166h0" />`;
+  if(sh.lampadaire)s+=shadow(300,FLOOR+2,12,3)+`<path d="M294 ${FLOOR+2}h14" stroke="${OUT}" stroke-width="3" stroke-linecap="round"/><path d="M301 ${FLOOR}V96q0 -16 -18 -16" fill="none" stroke="${OUT}" stroke-width="4" stroke-linecap="round"/><path d="M301 ${FLOOR}V96q0 -16 -18 -16" fill="none" stroke="#7fae6a" stroke-width="1.8" stroke-linecap="round"/><path d="M268 96l14 -20l16 10z" fill="#f7c948" ${st}/><path d="M276 96L240 166H300L292 92z" fill="#ffe9a8" opacity="${night?.45:.22}"/>`;
+  if(sh.lampadaire)lights+=`<path d="M276 96L236 168H302L292 92z" fill="#ffd77a" opacity="${night?.35:.12}" filter="url(#soft)"/><circle cx="284" cy="92" r="16" fill="#ffd77a" opacity="${night?.6:.2}" filter="url(#bigglow)"/>`;
+  // chaise vue de dos (+ petit soleil assis si on travaille)
+  const chair=`${shadow(206,FLOOR+24,32,4)}<path d="M180 222h52l2 8h-56z" fill="#f2ead9" ${st}/><path d="M184 230l-6 ${FLOOR+22-230}M228 230l6 ${FLOOR+22-230}M192 230l-2 ${FLOOR+14-230}M220 230l2 ${FLOOR+14-230}" stroke="${OUT}" stroke-width="5" stroke-linecap="round"/><path d="M184 230l-6 ${FLOOR+22-230}M228 230l6 ${FLOOR+22-230}M192 230l-2 ${FLOOR+14-230}M220 230l2 ${FLOOR+14-230}" stroke="#f2ead9" stroke-width="2.4" stroke-linecap="round"/><path d="M181 ${FLOOR+6}H231" stroke="${OUT}" stroke-width="1.6"/>`;
+  const chairBack=`<path d="M182 222V182q0 -8 8 -8h32q8 0 8 8V222" fill="none" stroke="${OUT}" stroke-width="5" stroke-linecap="round"/><path d="M182 222V182q0 -8 8 -8h32q8 0 8 8V222" fill="none" stroke="#f2ead9" stroke-width="2.4" stroke-linecap="round"/><rect x="180" y="172" width="52" height="11" rx="5" fill="#f2ead9" ${st}/><path d="M184 174.5h44" stroke="#fff" stroke-width="1.4" opacity=".7" stroke-linecap="round"/>${[195,206,217].map(x=>`<path d="M${x} 183V222" stroke="${OUT}" stroke-width="4.2" stroke-linecap="round"/><path d="M${x} 183V222" stroke="#f2ead9" stroke-width="1.9" stroke-linecap="round"/>`).join("")}`;
+  s+=chair;
+  s+=`</g>`;
+  if(work)s+=`<g transform="translate(206 182) scale(.95)" filter="url(#rough)">${charBack(state.char)}</g>`;
+  s+=`<g filter="url(#rough)">${chairBack}</g>`;
+  if(sh.chaton)s+=`<g transform="translate(66 ${FLOOR+38})" filter="url(#rough)">${shadow(2,10,30,5)}
+    <path d="M-26 6q-6 -18 14 -22q20 -4 34 6q10 8 4 18q-4 6 -22 6q-24 0 -30 -8z" fill="#f5b26b" ${st}/>
+    <path d="M-6 -14q2 8 -2 18M6 -14q2 8 -1 18M16 -10q2 8 -2 16" stroke="#e08c42" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M24 10q8 4 2 10q-10 6 -38 4" fill="none" stroke="${OUT}" stroke-width="5.6" stroke-linecap="round"/><path d="M24 10q8 4 2 10q-10 6 -38 4" fill="none" stroke="#f5b26b" stroke-width="3" stroke-linecap="round"/><path d="M-10 23q-3 1 -4 0" stroke="#e08c42" stroke-width="2" stroke-linecap="round"/>
+    <ellipse cx="-22" cy="4" rx="14" ry="11" fill="#f5b26b" ${st}/>
+    <path d="M-33 -3l-2 -11l9 6zM-17 -6l5 -10l3 11z" fill="#f5b26b" ${st}/><path d="M-32 -6l-1 -5l4 3zM-15 -8l3 -5l1 5z" fill="#f6c7c0"/>
+    <path d="M-29 4q2 2 4 0M-20 4q2 2 4 0" fill="none" stroke="${OUT}" stroke-width="1.3" stroke-linecap="round"/><path d="M-23.5 7.5l1.5 1.2l1.5 -1.2" fill="#e98b8b" stroke="${OUT}" stroke-width=".8"/>
+    <path d="M-36 8h-6M-36 10.5l-5 2M-9 8h6M-9 10.5l5 2" stroke="${OUT}" stroke-width=".7" opacity=".6"/>
+    <ellipse cx="-12" cy="14" rx="5" ry="3.4" fill="#fbd3a6" ${st}/><ellipse cx="-2" cy="15" rx="5" ry="3.4" fill="#fbd3a6" ${st}/>
+    <text x="10" y="-14" font-family="Gaegu,cursive" font-size="9" fill="${OUT}" opacity=".6">z</text><text x="16" y="-22" font-family="Gaegu,cursive" font-size="7" fill="${OUT}" opacity=".5">z</text></g>`;
+  if(sh.pouf)s+=`<g transform="translate(118 ${FLOOR+44})" filter="url(#rough)">${shadow(0,9,22,4)}<path d="M-20 0v-10a20 8 0 0 1 40 0v10a20 8 0 0 1 -40 0z" fill="#9fc58a" ${st}/><ellipse cy="-10" rx="20" ry="8" fill="#b9d6a5" ${st}/></g>`;
+  // petit soleil debout dans la chambre quand on ne travaille pas
+  if(!work)s+=`<g transform="translate(${sh.bibliotheque?262:330} ${FLOOR+19}) scale(1.05)" filter="url(#rough)">${charSVG(state.char,false)}</g>`;
+  const tone={nuit:["#1b1840",.38],golden:["#ff8a3d",.1],aube:["#ff9ea0",.07],midi:["#fff4d6",0]}[p.key];
+  s+=`<rect width="400" height="300" fill="url(#warm)"/><rect width="400" height="300" fill="${tone[0]}" opacity="${tone[1]}"/>${lights}<rect width="400" height="300" fill="url(#vig)"/>`;
+  s+=`<rect width="400" height="300" filter="url(#grain)" pointer-events="none"/></svg>`;
+  return s;
+}
+
+/* ===================== Chambre : pauses ===================== */
+const LOCK='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+const OPEN='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>';
+function renderApps(){
+  const now=Date.now();
+  setHTML($("apps"),APPS.map(a=>{
+    const until=state.unlocks[a.id]||0,open=until>now&&!isHard(a.id),left=Math.ceil((until-now)/1000);
+    const stt=isHard(a.id)?"Bloqué sans fin":open?"Ouvert · "+fmt(left):"Fermé";
+    return `<li class="item"><div class="ic">${open?OPEN:LOCK}</div><div class="nm"><strong>${a.name}</strong><span class="state ${open?"open":""}">${stt}</span></div>
+      <button class="small soft" data-id="${a.id}" ${open||isHard(a.id)||state.pauses<a.cost?"disabled":""}>${plural(a.cost,"pause")}</button></li>`;
+  }).join(""));
+}
+$("apps").onclick=e=>{const b=e.target.closest("button[data-id]");if(!b)return;const a=APPS.find(x=>x.id===b.dataset.id);if(state.pauses<a.cost)return;
+  state.pauses-=a.cost;state.unlocks[a.id]=Date.now()+a.min*60000;save();say(`${a.name} est ouvert pour ${a.min} min. Profite bien !`,"ok");render();};
+
+/* ===================== Mon rythme : nombre de pauses par jour ===================== */
+// Le changement s'applique demain matin : on avance à son rythme, sans décision prise sur un coup de tête.
+function setDaily(d){
+  const cur=state.nextDaily??state.daily, n=Math.max(0,Math.min(50,cur+d));
+  state.nextDaily=n===state.daily?null:n; save(); render();
+}
+$("less").onclick=()=>setDaily(-1); $("more").onclick=()=>setDaily(1);
+function renderRhythm(){
+  const next=state.nextDaily, shown=next??state.daily;
+  $("daily").textContent=shown;
+  $("rhythmNote").textContent=next==null?`${plural(state.daily,"pause")} par jour`:
+    (next<state.daily?`Bravo ! Dès demain matin : ${plural(next,"pause")} par jour.`:`Dès demain matin : ${plural(next,"pause")} par jour.`);
+}
+
+/* ===================== Focus : chrono ===================== */
+const hms=ms=>{const s=Math.floor(ms/1000);return[Math.floor(s/3600),Math.floor(s/60)%60,s%60].map(n=>String(n).padStart(2,"0")).join(":");};
+const human=ms=>{const m=Math.floor(ms/60000);return m<60?`${m} min`:`${Math.floor(m/60)} h ${String(m%60).padStart(2,"0")}`;};
+function workToday(){if(state.workDay!==today()){state.workDay=today();state.workMs=0;state.blocks=0;}}
+const elapsed=()=>{const f=state.focus;return f?f.acc+(f.running?Date.now()-f.since:0):0;};
+const todayMs=()=>{workToday();return state.workMs+elapsed();};
+let wake=null;
+async function keepAwake(){try{wake=await navigator.wakeLock?.request("screen");}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.focus?.running)keepAwake();});
+async function openRoom(){$("focusView").hidden=false;keepAwake();try{AND?.setFocusMode(true);}catch(e){}
+  try{await document.documentElement.requestFullscreen?.();}catch(e){}
+  try{await screen.orientation?.lock?.("landscape");}catch(e){}render();}
+async function closeRoom(){$("focusView").hidden=true;try{AND?.setFocusMode(false);}catch(e){}
+  try{if(document.fullscreenElement)await document.exitFullscreen();}catch(e){}
+  try{screen.orientation?.unlock?.();}catch(e){}render();}
+function startFocus(){if(!state.focus)state.focus={acc:0,since:Date.now(),running:true};else if(!state.focus.running){state.focus.since=Date.now();state.focus.running=true;}save();}
+function pauseFocus(){const f=state.focus;if(!f)return;if(f.running){f.acc+=Date.now()-f.since;f.running=false;}else{f.since=Date.now();f.running=true;keepAwake();}save();render();}
+function stopFocus(){const f=state.focus;if(!f)return;workToday();const ms=elapsed();state.workMs+=ms;state.focus=null;save();try{wake?.release?.();}catch(e){}
+  say(`Bravo, ${human(ms)} de travail ! Aujourd'hui : ${human(state.workMs)}.`,"ok");closeRoom();}
+$("enter").onclick=()=>{startFocus();openRoom();};
+$("pause").onclick=pauseFocus;$("fpause").onclick=pauseFocus;$("stop").onclick=stopFocus;
+$("fexit").onclick=()=>{closeRoom();if(state.focus?.running)say("Le chrono continue. Reviens dans ta chambre quand tu veux.");};
+function checkBlocks(){workToday();const n=Math.floor(todayMs()/RULES.block);
+  if(n>(state.blocks||0)){state.rays+=n-(state.blocks||0);state.blocks=n;save();say(`15 min de travail : +1 rayon de soleil pour ${state.char.name||"ton petit soleil"} !`,"ok");}}
+function renderFocus(){
+  const f=state.focus,e=elapsed(),t=todayMs();
+  $("timer").textContent=hms(e);$("fchrono").textContent=hms(e);
+  $("today").textContent=$("ftoday").textContent=`Aujourd'hui : ${human(t)}`;
+  const inB=t%RULES.block;$("progress").style.width=(100*inB/RULES.block)+"%";
+  $("nextRay").textContent=`Encore ${Math.ceil((RULES.block-inB)/60000)} min avant ton prochain rayon.`;
+  $("enter").textContent=f?"Retourner dans ma chambre":"Entrer dans ma chambre";
+  $("pause").disabled=$("stop").disabled=!f;
+  const lbl=f&&!f.running?"Reprendre":"Pause";$("pause").textContent=lbl;$("fpause").textContent=lbl;
+  $("fstate").textContent=f&&!f.running?"En pause":`${state.char.name||"Ton soleil"} travaille avec toi`;
+  if(!$("focusView").hidden){
+    const box=$("fscene"),t2=THEMES[state.theme];setHTML(box,room(!!f&&f.running));
+    box.querySelector("svg").setAttribute("preserveAspectRatio","xMidYMid meet");
+    const W=box.clientWidth,H=box.clientHeight,h=Math.min(W*.75,H),top=Math.max(0,(H-h)/2),cut=H?((top+h*238/300)/H*100).toFixed(1):50;
+    box.style.background=`linear-gradient(to bottom,${t2.wall} 0,${t2.wall2} ${cut}%,${t2.floor} ${cut}%)`;
+  }
+}
+
+/* ===================== Perso ===================== */
+const charInput=$("charName");
+charInput.value=state.char.name||"";
+charInput.oninput=()=>{state.char.name=charInput.value.trim()||"Soleil";save();render();};
+function optBtn(key,label,cost,on,owned){
+  return `<button class="opt" data-k="${key}" aria-pressed="${on}" ${!owned&&state.rays<cost?"disabled":""}>${label}<small>${owned?(on?"Porté":"À toi"):cost+" rayons"}</small></button>`;
+}
+function renderWardrobe(){
+  setHTML($("avatar"),`<svg viewBox="-55 -58 110 100" xmlns="http://www.w3.org/2000/svg"><defs><filter id="rough2"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="1.6"/></filter></defs><g filter="url(#rough2)">${charSVG(state.char,false)}</g></svg>`);
+  let h=`<div><h3>Couleur</h3><div class="opts">${Object.entries(TINTS).map(([k,v])=>optBtn("tint:"+k,v.name,v.cost,state.char.tint===k,state.owned["tint-"+k])).join("")}</div></div>`;
+  WARDROBE.forEach(w=>{
+    h+=`<div><h3>${w.label}</h3><div class="opts">${optBtn(w.slot+":","Aucun",0,!state.char[w.slot],true)}${Object.entries(w.items).map(([k,[n,c]])=>optBtn(w.slot+":"+k,n,c,state.char[w.slot]===k,state.owned[w.slot+"-"+k])).join("")}</div></div>`;
+  });
+  setHTML($("wardrobe"),h);
+}
+$("wardrobe").onclick=e=>{
+  const b=e.target.closest("button[data-k]");if(!b)return;const [slot,k]=b.dataset.k.split(":");
+  if(slot==="tint"){const v=TINTS[k];if(!state.owned["tint-"+k]){if(state.rays<v.cost)return;state.rays-=v.cost;state.owned["tint-"+k]=true;say(`Nouvelle couleur : ${v.name.toLowerCase()} !`,"ok");}state.char.tint=k;}
+  else if(!k){state.char[slot]=null;}
+  else{const w=WARDROBE.find(x=>x.slot===slot),[n,c]=w.items[k],id=slot+"-"+k;
+    if(!state.owned[id]){if(state.rays<c)return;state.rays-=c;state.owned[id]=true;say(`${n} ajouté à la garde-robe !`,"ok");}
+    state.char[slot]=state.char[slot]===k?null:k;}
+  save();render();
+};
+
+/* ===================== Déco ===================== */
+function renderShop(){
+  setHTML($("shop"),DECO.map(d=>{const own=state.owned[d.id],on=state.shown[d.id];
+    const btn=own?`<button class="${on?"ghost":"primary"} small" data-deco="${d.id}">${on?"Ranger":"Installer"}</button>`
+      :`<button class="soft small" data-buy="${d.id}" ${state.rays<d.cost?"disabled":""}>${d.cost} rayons</button>`;
+    return `<div class="deco ${on?"on":""}"><strong>${d.name}</strong><span class="state">${own?(on?"Dans ta chambre":"Dans le placard"):""}</span>${btn}</div>`;}).join(""));
+  setHTML($("themes"),Object.entries(THEMES).map(([k,v])=>`<button class="opt" data-theme-id="${k}" aria-pressed="${state.theme===k}" ${!state.owned[k]&&state.rays<v.cost?"disabled":""}>
+    <span style="display:block;width:44px;height:26px;border-radius:8px;border:2px solid var(--ink);background:linear-gradient(180deg,${v.wall} 60%,${v.floor} 60%)"></span>${v.name}<small>${state.owned[k]?(state.theme===k?"Choisie":"À toi"):v.cost+" rayons"}</small></button>`).join(""));
+}
+$("shop").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.buy){const d=DECO.find(x=>x.id===b.dataset.buy);if(state.rays<d.cost)return;state.rays-=d.cost;state.owned[d.id]=true;state.shown[d.id]=true;say(`${d.name} installé dans ta chambre !`,"ok");}
+  if(b.dataset.deco){state.shown[b.dataset.deco]=!state.shown[b.dataset.deco];}
+  save();render();};
+$("themes").onclick=e=>{const b=e.target.closest("button[data-theme-id]");if(!b)return;const k=b.dataset.themeId,v=THEMES[k];
+  if(!state.owned[k]){if(state.rays<v.cost)return;state.rays-=v.cost;state.owned[k]=true;}state.theme=k;save();say(`Ambiance ${v.name.toLowerCase()} appliquée.`,"ok");render();};
+
+/* ===================== Blocage sans fin ===================== */
+const exits={};
+function renderLock(){
+  const ids=Object.keys(state.hard),free=[...APPS,{id:"custom",name:"Personnalisé"}].filter(a=>!state.hard[a.id]),keep=$("target").value;
+  setHTML($("target"),free.map(a=>`<option value="${a.id}">${a.name}</option>`).join(""));
+  if(free.some(a=>a.id===keep))$("target").value=keep;
+  $("target").disabled=$("hardOn").disabled=!free.length;
+  $("customBox").hidden=$("target").value!=="custom";
+  renderCustomApps();
+  setHTML($("hardlist"),ids.map(id=>{
+    const x=exits[id],label=id==="custom"?"Ma sélection : "+(state.custom.length>4?state.custom.slice(0,4).map(nameOf).join(", ")+` et ${state.custom.length-4} autres`:state.custom.map(nameOf).join(", ")):nameOf(id);
+    const since=new Date(state.hard[id]).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+    let note=`Bloqué depuis ${since}`,btns=`<button class="ghost small" data-act="ask" data-id="${id}">Arrêter</button>`;
+    if(x){const left=Math.max(0,Math.ceil((x.at-Date.now())/1000)),keepB=`<button class="primary small" data-act="keep" data-id="${id}">Garder</button>`;
+      if(left>0){note=`Attends encore ${left} s…`;btns=keepB;}
+      else if(x.step===1){note="1re confirmation : tu veux vraiment arrêter ?";btns=keepB+`<button class="ghost small" data-act="c1" data-id="${id}">Oui</button>`;}
+      else{note="2e confirmation : dernier mot ?";btns=keepB+`<button class="ghost small" data-act="c2" data-id="${id}">Arrêter</button>`;}}
+    return `<li class="item"><div class="ic">${LOCK}</div><div class="nm"><strong>${label}</strong><span class="state">${note}</span></div><div class="row" style="flex-wrap:nowrap">${btns}</div></li>`;
+  }).join(""));
+}
+// La sélection : les 4 apps de base sur le web, toutes les apps du téléphone dans l'appli Android
+const picked=new Set();
+function renderCustomApps(){
+  if(AND&&$("target").value==="custom")loadPhoneApps();
+  const box=$("customApps"), q=($("appSearch").value||"").trim().toLowerCase();
+  if(phoneApps&&phoneApps.length){
+    $("appSearch").hidden=false;box.classList.add("phoneapps");
+    const ids=new Set(APPS.flatMap(a=>a.pkgs||[]));
+    const list=phoneApps.filter(a=>!q||a.name.toLowerCase().includes(q));
+    setHTML(box,list.map(a=>{const base=APPS.find(x=>(x.pkgs||[]).includes(a.pkg)),id=base?base.id:"pkg:"+a.pkg;
+      return `<label><input type="checkbox" value="${id}" data-name="${a.name.replace(/"/g,"&quot;")}">${a.icon?`<img src="data:image/png;base64,${a.icon}" alt="">`:""}<span>${a.name.replace(/</g,"&lt;")}</span></label>`;}).join("")||`<p class="note">Aucune app ne correspond.</p>`);
+  }else setHTML(box,APPS.filter(a=>a.id!=="phone").map(a=>`<label><input type="checkbox" id="c-${a.id}" value="${a.id}">${a.name}</label>`).join(""));
+  box.querySelectorAll("input[type=checkbox]").forEach(i=>i.checked=picked.has(i.value));
+}
+$("customApps").addEventListener("change",e=>{const i=e.target;if(i.type!=="checkbox")return;if(i.checked){picked.add(i.value);if(i.dataset.name&&i.value.startsWith("pkg:"))state.customNames[i.value]=i.dataset.name;}else picked.delete(i.value);});
+$("appSearch").oninput=renderCustomApps;
+$("target").onchange=()=>{$("customBox").hidden=$("target").value!=="custom";renderCustomApps();};
+$("hardOn").onclick=()=>{const id=$("target").value;if(!id)return;
+  if(id==="custom"){const sel=[...picked];
+    if(!sel.length){say("Coche au moins une app à bloquer.","warn");return;}
+    state.custom=sel;sel.forEach(p=>delete state.unlocks[p]);state.hard.custom=Date.now();picked.clear();$("appSearch").value="";}
+  else{state.hard[id]=Date.now();if(id==="phone")state.unlocks={};else delete state.unlocks[id];}
+  save();say(`${nameOf(id)} : blocage sans fin activé.`,"warn");render();};
+$("hardlist").onclick=e=>{const b=e.target.closest("button[data-act]");if(!b)return;const id=b.dataset.id,act=b.dataset.act;
+  if(act==="ask")exits[id]={at:Date.now()+RULES.exitWait*1000,step:1};
+  if(act==="keep"){delete exits[id];say(`Bien joué, ${nameOf(id)} reste bloqué.`,"ok");}
+  if(act==="c1")exits[id].step=2;
+  if(act==="c2"){delete exits[id];delete state.hard[id];if(id==="custom")state.custom=[];save();say(`Blocage de ${nameOf(id)} arrêté.`);}
+  render();};
+
+/* ===================== Onglets et rendu ===================== */
+document.querySelector(".tabs").onclick=e=>{const b=e.target.closest("button[data-go]");if(!b)return;
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
+  document.querySelectorAll("[data-tab]").forEach(s=>s.hidden=s.dataset.tab!==b.dataset.go);scrollTo({top:0});};
+function render(){
+  $("rays").textContent=state.rays;$("pauses").textContent=state.pauses;
+  const work=!!state.focus?.running;
+  setHTML($("scene"),room(work));
+  const p=phase(),n=state.char.name||"Ton petit soleil";
+  $("caption").textContent=work?`${n} travaille avec toi. C'est ${p.label}.`:`C'est ${p.label}. ${n} t'attend dans ta chambre.`;
+  renderWeather();renderRhythm();renderApps();renderFocus();renderWardrobe();renderShop();renderLock();
+}
+function renderNative(){
+  if(!AND)return;$("nativeBox").hidden=false;let on=false;try{on=AND.isEnabled();}catch(e){}
+  $("nativeBox").classList.toggle("on",on);$("nativeBtn").hidden=on;
+  $("nativeText").textContent=on?"Le blocage est actif : tes apps restent fermées tant que tu ne prends pas de pause.":"Pour que Sunrise ferme vraiment tes apps, active le blocage dans les réglages d'accessibilité.";
+}
+$("nativeBtn").onclick=()=>{try{AND.openSettings();}catch(e){}};
+window.sunriseBlocked=name=>{document.querySelector('.tabs [data-go="chambre"]').click();say(`${name} est fermé pour l'instant. Prends une pause ici si tu en as vraiment besoin.`,"warn");};
+window.sunriseResume=()=>{renderNative();render();};
+setInterval(()=>{newDay();if(state.focus?.running)checkBlocks();render();},1000);
+newDay();render();renderNative();syncNative();refreshWeather();setInterval(refreshWeather,30*60000);
+</script>
+<script>
+if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
+</script>
+</body>
+</html>
