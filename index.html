@@ -78,6 +78,9 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .stepper{display:flex;align-items:center;gap:10px}
 .stepper button{width:44px;font-size:1.3rem;padding:6px}
 .stepper output{font-family:var(--display);font-size:2rem;font-weight:700;min-width:2ch;text-align:center;font-variant-numeric:tabular-nums}
+.native{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px;border-radius:16px;border:2px dashed var(--sun);background:color-mix(in srgb,var(--sun-soft) 60%,transparent)}
+.native p{margin:0;flex:1 1 200px;font-size:.92rem;font-weight:600}
+.native.on{border-style:solid;border-color:var(--sage);background:transparent}
 .timer{font-family:var(--display);font-size:4.4rem;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;line-height:1}
 .bar{height:12px;border-radius:99px;background:var(--line);overflow:hidden;border:2px solid var(--line)}
 .bar i{display:block;height:100%;width:0;background:var(--sun);transition:width .5s linear}
@@ -156,6 +159,10 @@ fieldset legend{padding:0 6px}
   <!-- Chambre : pauses pour les apps -->
   <section class="panel" data-tab="chambre" aria-labelledby="c-title">
     <h2 id="c-title">Prendre une pause</h2>
+    <div class="native" id="nativeBox" hidden>
+      <p id="nativeText"></p>
+      <button class="primary small" id="nativeBtn">Activer le blocage</button>
+    </div>
     <ul class="list" id="apps"></ul>
     <p class="note">1 pause ouvre une app 10 min, 2 pauses ouvrent tout le téléphone 15 min. Chaque pause gardée à minuit devient 1 rayon de soleil (5 rayons max par nuit).</p>
     <div class="rhythm">
@@ -247,8 +254,10 @@ fieldset legend{padding:0 6px}
 const RULES={daily:5, exitWait:60, block:15*60000};
 const today=()=>new Date().toLocaleDateString("fr-CA");
 const APPS=[
-  {id:"insta",name:"Instagram",cost:1,min:10},{id:"tiktok",name:"TikTok",cost:1,min:10},
-  {id:"snap",name:"Snapchat",cost:1,min:10},{id:"yt",name:"YouTube",cost:1,min:10},
+  {id:"insta",name:"Instagram",cost:1,min:10,pkgs:["com.instagram.android","com.instagram.lite"]},
+  {id:"tiktok",name:"TikTok",cost:1,min:10,pkgs:["com.zhiliaoapp.musically","com.ss.android.ugc.trill","com.zhiliaoapp.musically.go"]},
+  {id:"snap",name:"Snapchat",cost:1,min:10,pkgs:["com.snapchat.android"]},
+  {id:"yt",name:"YouTube",cost:1,min:10,pkgs:["com.google.android.youtube"]},
   {id:"phone",name:"Tout le téléphone",cost:2,min:15}
 ];
 const DECO=[
@@ -288,7 +297,10 @@ let state={daily:RULES.daily, nextDaily:null, pauses:RULES.daily, day:today(), u
       if(typeof state.hard!=="object")state.hard={};}
   }catch(e){}
 })();
-function save(){try{localStorage.setItem("sunrise2",JSON.stringify(state));}catch(e){}}
+const AND=window.SunriseAndroid||null; // présent seulement dans l'appli Android
+function syncNative(){if(!AND)return;try{AND.sync(JSON.stringify({unlocks:state.unlocks,hard:state.hard,custom:state.custom,
+  apps:APPS.filter(a=>a.id!=="phone").map(a=>({id:a.id,name:a.name,pkgs:a.pkgs}))}));}catch(e){}}
+function save(){try{localStorage.setItem("sunrise2",JSON.stringify(state));}catch(e){}syncNative();}
 const $=id=>document.getElementById(id);
 const setHTML=(el,h)=>{if(el._h!==h){el._h=h;el.innerHTML=h;}};
 const fmt=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
@@ -639,10 +651,10 @@ const todayMs=()=>{workToday();return state.workMs+elapsed();};
 let wake=null;
 async function keepAwake(){try{wake=await navigator.wakeLock?.request("screen");}catch(e){}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.focus?.running)keepAwake();});
-async function openRoom(){$("focusView").hidden=false;keepAwake();
+async function openRoom(){$("focusView").hidden=false;keepAwake();try{AND?.setFocusMode(true);}catch(e){}
   try{await document.documentElement.requestFullscreen?.();}catch(e){}
   try{await screen.orientation?.lock?.("landscape");}catch(e){}render();}
-async function closeRoom(){$("focusView").hidden=true;
+async function closeRoom(){$("focusView").hidden=true;try{AND?.setFocusMode(false);}catch(e){}
   try{if(document.fullscreenElement)await document.exitFullscreen();}catch(e){}
   try{screen.orientation?.unlock?.();}catch(e){}render();}
 function startFocus(){if(!state.focus)state.focus={acc:0,since:Date.now(),running:true};else if(!state.focus.running){state.focus.since=Date.now();state.focus.running=true;}save();}
@@ -759,8 +771,16 @@ function render(){
   $("caption").textContent=work?`${n} travaille avec toi. C'est ${p.label}.`:`C'est ${p.label}. ${n} t'attend dans ta chambre.`;
   renderWeather();renderRhythm();renderApps();renderFocus();renderWardrobe();renderShop();renderLock();
 }
+function renderNative(){
+  if(!AND)return;$("nativeBox").hidden=false;let on=false;try{on=AND.isEnabled();}catch(e){}
+  $("nativeBox").classList.toggle("on",on);$("nativeBtn").hidden=on;
+  $("nativeText").textContent=on?"Le blocage est actif : tes apps restent fermées tant que tu ne prends pas de pause.":"Pour que Sunrise ferme vraiment tes apps, active le blocage dans les réglages d'accessibilité.";
+}
+$("nativeBtn").onclick=()=>{try{AND.openSettings();}catch(e){}};
+window.sunriseBlocked=name=>{document.querySelector('.tabs [data-go="chambre"]').click();say(`${name} est fermé pour l'instant. Prends une pause ici si tu en as vraiment besoin.`,"warn");};
+window.sunriseResume=()=>{renderNative();render();};
 setInterval(()=>{newDay();if(state.focus?.running)checkBlocks();render();},1000);
-newDay();render();refreshWeather();setInterval(refreshWeather,30*60000);
+newDay();render();renderNative();syncNative();refreshWeather();setInterval(refreshWeather,30*60000);
 </script>
 <script>
 if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}

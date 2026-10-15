@@ -1,0 +1,49 @@
+name: Appli Android
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: Copier l'interface de Sunrise dans l'appli
+        run: |
+          mkdir -p android/app/src/main/assets/icons
+          cp index.html android/app/src/main/assets/
+          cp icons/*.png android/app/src/main/assets/icons/
+
+      - name: Compiler l'APK
+        working-directory: android
+        run: gradle --no-daemon assembleRelease
+
+      - name: Renommer
+        run: cp android/app/build/outputs/apk/release/app-release.apk Sunrise.apk
+
+      - name: Publier la version
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Sunrise 1.0.${{ github.run_number }}
+          make_latest: true
+          body: |
+            Appli Android de Sunrise. Télécharge **Sunrise.apk** ci-dessous et ouvre-le sur ton téléphone pour l'installer.
+          files: Sunrise.apk

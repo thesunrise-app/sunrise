@@ -9,7 +9,15 @@ Chaque matin, le soleil se lève. Une appli de déconnexion qui fonctionne à la
 - **Le mode chambre** : plein écran, à utiliser en paysage, avec un chrono de ton temps de travail.
 - **Le blocage sans fin** d'une app, de tout le téléphone ou d'une sélection. Pour l'arrêter : 60 secondes d'attente et deux confirmations.
 
-## Installer l'appli
+## Appli Android (vrai blocage des apps)
+
+1. Sur ton téléphone Android, télécharge **Sunrise.apk** : https://github.com/thesunrise-app/sunrise/releases/latest/download/Sunrise.apk
+2. Ouvre le fichier. Android demande d'autoriser l'installation depuis ton navigateur : accepte.
+3. Ouvre Sunrise, puis touche **Activer le blocage** et active **Sunrise – blocage des apps** dans les réglages d'accessibilité.
+
+Ensuite, Instagram, TikTok, Snapchat et YouTube restent fermés tant que tu ne prends pas de pause dans Sunrise. L'écran d'accueil, les réglages et le téléphone (appels) ne sont jamais bloqués.
+
+## Installer la version web
 
 Ouvre https://thesunrise-app.github.io/sunrise/ dans Safari (iPhone, iPad) ou Chrome (Android), puis :
 

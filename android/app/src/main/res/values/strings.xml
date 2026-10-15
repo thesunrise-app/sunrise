@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sunrise</string>
+    <string name="a11y_label">Sunrise – blocage des apps</string>
+    <string name="a11y_desc">Sunrise regarde seulement quelle app tu ouvres, pour fermer celles que tu as choisi de bloquer tant que tu n\'as pas pris de pause. Aucun contenu n\'est lu, et rien ne quitte ton téléphone.</string>
+</resources>
