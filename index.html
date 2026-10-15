@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Chaque matin, 5 nouveaux rayons de soleil pour ouvrir tes apps, et un bureau ensoleillé à décorer.">
+<meta name="theme-color" content="#fff8ea">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Sunrise">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+<title>Sunrise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Nunito:wght@400;600;800&display=swap">
+<style>
+/* Layout : appli mobile — la scène du bureau ensoleillé reste en haut, le contenu de l'onglet en dessous, la barre d'onglets en bas */
+:root{
+  --bg:#fff8ea; --card:#fffdf7; --ink:#3b2a1e; --muted:#8a7362; --line:#f0dfc4;
+  --sun:#ffbf2f; --sun-soft:#fff0c2; --peach:#ff9f73; --sage:#7f9c6a; --warn:#d9623b;
+  --display:"DM Serif Display",Georgia,serif;
+  --body:"Nunito",ui-rounded,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#211a26; --card:#2c2333; --ink:#fbeedd; --muted:#c3aeb0; --line:#43364b;
+  --sun:#ffc94d; --sun-soft:#4a3a1f; --peach:#ffab85; --sage:#a5c290; --warn:#ff8a63; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#211a26; --card:#2c2333; --ink:#fbeedd; --muted:#c3aeb0; --line:#43364b;
+  --sun:#ffc94d; --sun-soft:#4a3a1f; --peach:#ffab85; --sage:#a5c290; --warn:#ff8a63; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:14px calc(96px + env(safe-area-inset-bottom,0px))}
+main{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance}
+h1{font-size:2rem;letter-spacing:-.01em}
+h1 em{color:var(--sun);font-style:italic}
+h2{font-size:1.35rem}
+.label{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:800}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.chips{display:flex;gap:8px}
+.chip{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 6px;font-weight:800;font-variant-numeric:tabular-nums}
+.chip svg{flex:none}
+.scene{border-radius:24px;overflow:hidden;border:1px solid var(--line);box-shadow:0 10px 30px -18px color-mix(in srgb,var(--sun) 70%,transparent)}
+.scene svg{display:block;width:100%;height:auto}
+.caption{margin:-6px 4px 0;font-size:.9rem;color:var(--muted)}
+.weather{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-8px 4px 0;font-size:.9rem}
+.weather .link{flex:none;background:none;padding:2px 0;color:var(--muted);text-decoration:underline;font-weight:600;font-size:.88rem}
+.cityform{display:flex;gap:8px;width:100%}
+.cityform input{font:inherit;flex:1;min-width:0;padding:9px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.preview{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+.preview button{flex:none;padding:6px 10px;font-size:.8rem;border:1.5px solid var(--line);background:transparent;border-radius:999px}
+.preview button[aria-pressed="true"]{background:var(--sun-soft);border-color:var(--sun)}
+.focusview{position:fixed;inset:0;z-index:20;background:var(--bg);display:grid;grid-template-rows:minmax(0,1fr) auto;
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+.focusview .fscene{min-height:0;overflow:hidden;background:var(--sun-soft)}
+.focusview .fscene svg{width:100%;height:100%;display:block}
+.fpanel{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px max(16px,env(safe-area-inset-left,0px)) 20px}
+.chrono{font-family:var(--display);font-size:clamp(2.6rem,9vw,4.4rem);line-height:1;font-variant-numeric:tabular-nums}
+.fpanel .row{width:100%;max-width:360px}
+.hint{font-size:.85rem;color:var(--muted);margin:0;text-align:center}
+@media (orientation:landscape){
+  .focusview{grid-template-rows:none;grid-template-columns:minmax(0,1fr) minmax(220px,30%)}
+  .fpanel{justify-content:center;padding:16px}
+  .chrono{font-size:clamp(2.2rem,5.5vw,4rem)}
+  .focusview .hint.rotate{display:none}
+}
+@keyframes fall{from{transform:translateY(-20px)}to{transform:translateY(150px)}}
+.drop{animation:fall .9s linear infinite}.flake{animation:fall 6s linear infinite}
+@media (prefers-reduced-motion:reduce){.drop,.flake{animation:none}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.note{font-size:.9rem;color:var(--muted);margin:0}
+.msg{font-size:.95rem;margin:0;min-height:1.4em;font-weight:600}
+.msg.ok{color:var(--sage)} .msg.warn{color:var(--warn)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+button{font:inherit;font-weight:800;border:0;border-radius:14px;padding:12px 16px;cursor:pointer;flex:1;min-width:0;color:var(--ink)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+button:disabled{opacity:.4;cursor:not-allowed}
+.primary{background:var(--sun);color:#3b2a1e}
+.ghost{background:transparent;border:1.5px solid var(--line)}
+.danger{background:var(--warn);color:#fffdf7}
+.soft{background:var(--sun-soft)}
+.list{display:flex;flex-direction:column;gap:10px;list-style:none;margin:0;padding:0}
+.item{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:12px;padding:10px;border-radius:16px;border:1px solid var(--line)}
+.item .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--bg);color:var(--muted)}
+.item .nm{min-width:0}
+.item .nm strong{display:block;font-weight:800}
+.state{font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.state.open{color:var(--sage);font-weight:700}
+.small{flex:none;padding:9px 12px;font-size:.88rem}
+.timer{font-family:var(--display);font-size:4rem;text-align:center;font-variant-numeric:tabular-nums;line-height:1}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--peach),var(--sun));transition:width .5s linear}
+select{font:inherit;flex:1;min-width:0;padding:11px 12px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink)}
+fieldset{border:1.5px solid var(--line);border-radius:16px;padding:12px;margin:0}
+fieldset legend{padding:0 6px}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks label{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid var(--line);border-radius:999px;cursor:pointer}
+.checks input{accent-color:var(--warn);width:18px;height:18px}
+#hardlist .item{grid-template-columns:40px 1fr}
+#hardlist .row{grid-column:1/-1}
+.shop{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.deco{border:1.5px solid var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.deco.on{border-color:var(--sun);background:color-mix(in srgb,var(--sun-soft) 55%,transparent)}
+.deco strong{font-weight:800}
+.deco button{margin-top:auto}
+.deco .state{min-height:1.3em}
+.themes{display:flex;gap:8px;flex-wrap:wrap}
+.themes button{flex:1 1 30%;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px;background:transparent;border:1.5px solid var(--line)}
+.themes button[aria-pressed="true"]{border-color:var(--sun);background:var(--sun-soft)}
+.swatch{width:44px;height:28px;border-radius:8px;display:block}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+  padding:8px max(12px,env(safe-area-inset-left,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-right,0px));z-index:5}
+.tabs div{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.tabs button{background:transparent;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.75rem;color:var(--muted);border-radius:12px}
+.tabs button[aria-selected="true"]{color:var(--ink);background:var(--sun-soft)}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div>
+      <p class="label" style="margin:0">Chaque matin, 5 nouveaux rayons</p>
+      <h1>Sun<em>rise</em></h1>
+    </div>
+    <div class="chips" aria-live="polite">
+      <span class="chip" title="Rayons du jour"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="6" fill="var(--sun)"/><g stroke="var(--sun)" stroke-width="2.4" stroke-linecap="round"><path d="M13 2v3M13 21v3M2 13h3M21 13h3M5 5l2 2M19 19l2 2M5 21l2-2M19 7l2-2"/></g></svg><span id="rays">5</span>&nbsp;rayons</span>
+      <span class="chip" title="Lumière gagnée"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M13 3l2.6 7.4L23 13l-7.4 2.6L13 23l-2.6-7.4L3 13l7.4-2.6z" fill="var(--peach)"/></svg><span id="light">0</span></span>
+    </div>
+  </div>
+
+  <div class="scene" id="scene" role="img" aria-label="Ton bureau ensoleillé"></div>
+  <p class="caption" id="caption"></p>
+  <div class="weather" id="weatherRow">
+    <span id="wtext">Je regarde le temps qu'il fait dehors…</span>
+    <button class="link" id="cityBtn">Changer de ville</button>
+    <form class="cityform" id="cityForm" hidden>
+      <input id="cityInput" placeholder="Ta ville, ex. Aix-en-Provence" autocomplete="address-level2">
+      <button class="primary small" type="submit">OK</button>
+    </form>
+    <div class="preview" id="preview" hidden></div>
+  </div>
+  <p class="msg" id="msg">Tes 5 rayons se rechargent chaque nuit. Ceux que tu gardes deviennent de la lumière pour décorer ton bureau.</p>
+
+  <!-- Onglet Bureau : dépenser ses rayons -->
+  <section class="panel" data-tab="bureau" aria-labelledby="b-title">
+    <h2 id="b-title">Utiliser un rayon</h2>
+    <ul class="list" id="apps"></ul>
+    <p class="note">Prix fixes : 1 rayon ouvre une app 10 min, 2 rayons ouvrent tout le téléphone 15 min.</p>
+  </section>
+
+  <!-- Onglet Focus -->
+  <section class="panel" data-tab="focus" aria-labelledby="f-title" hidden>
+    <h2 id="f-title">Temps de travail</h2>
+    <div class="timer" id="timer">00:00:00</div>
+    <p class="note" style="text-align:center" id="today">Aujourd'hui : 0 min</p>
+    <div class="bar"><i id="progress"></i></div>
+    <p class="note" id="nextLight">Encore 25 min avant ta prochaine lumière.</p>
+    <div class="row">
+      <button class="primary" id="enter">Entrer dans mon bureau</button>
+    </div>
+    <div class="row">
+      <button class="ghost" id="pause" disabled>Pause</button>
+      <button class="ghost" id="stop" disabled>Terminer</button>
+    </div>
+    <p class="note">Le chrono compte ton temps de travail. Toutes les 25 min de travail dans la journée, tu gagnes 1 lumière.</p>
+  </section>
+
+  <!-- Onglet Blocage -->
+  <section class="panel" data-tab="blocage" aria-labelledby="l-title" hidden>
+    <h2 id="l-title">Blocage sans fin</h2>
+    <p class="note">Bloque une app, tout le téléphone ou ta sélection, sans limite de temps. Les rayons ne marchent pas sur ce qui est bloqué.</p>
+    <div class="row">
+      <label class="label" for="target" style="flex-basis:100%">Quoi bloquer</label>
+      <select id="target"></select>
+      <button class="danger" id="hardOn">Bloquer</button>
+    </div>
+    <fieldset id="customBox" hidden>
+      <legend class="label">Choisis les apps les plus nocives pour toi</legend>
+      <div id="customApps" class="checks"></div>
+    </fieldset>
+    <ul class="list" id="hardlist"></ul>
+    <p class="note">Pour arrêter un blocage : 60 secondes d'attente, puis deux confirmations.</p>
+  </section>
+
+  <!-- Onglet Déco -->
+  <section class="panel" data-tab="deco" aria-labelledby="d-title" hidden>
+    <h2 id="d-title">Décorer mon bureau</h2>
+    <p class="note">Gagne de la lumière en gardant tes rayons (1 rayon gardé = 1 lumière à minuit) et en travaillant (25 min de travail = 1 lumière).</p>
+    <div class="shop" id="shop"></div>
+    <h2>Ambiance</h2>
+    <div class="themes" id="themes"></div>
+  </section>
+</main>
+
+<nav class="tabs" aria-label="Sections"><div role="tablist">
+  <button role="tab" data-go="bureau" aria-selected="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 14h18M5 14v6M19 14v6M7 14V9h4v5M15 10h3v4"/></svg>Bureau</button>
+  <button role="tab" data-go="focus" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg>Focus</button>
+  <button role="tab" data-go="blocage" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Blocage</button>
+  <button role="tab" data-go="deco" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 21c-3-2-5-5-5-8a5 5 0 0 1 10 0c0 3-2 6-5 8zM12 13V8M12 10l-2-2M12 9l2-2"/></svg>Déco</button>
+</div></nav>
+
+<div class="focusview" id="focusView" hidden role="dialog" aria-label="Mon bureau, mode focus">
+  <div class="fscene" id="fscene"></div>
+  <div class="fpanel">
+    <p class="label" style="margin:0" id="fstate">Au travail</p>
+    <div class="chrono" id="fchrono">00:00:00</div>
+    <p class="hint" id="ftoday">Aujourd'hui : 0 min</p>
+    <div class="row">
+      <button class="ghost" id="fpause">Pause</button>
+      <button class="primary" id="fexit">Quitter le bureau</button>
+    </div>
+    <p class="hint rotate">Tourne ton téléphone pour passer en paysage.</p>
+  </div>
+</div>
+
+<script>
+const RULES={daily:5, exitWait:60};
+const today=()=>new Date().toLocaleDateString("fr-CA");
+const APPS=[
+  {id:"insta",name:"Instagram",cost:1,min:10},
+  {id:"tiktok",name:"TikTok",cost:1,min:10},
+  {id:"snap",name:"Snapchat",cost:1,min:10},
+  {id:"yt",name:"YouTube",cost:1,min:10},
+  {id:"phone",name:"Tout le téléphone",cost:2,min:15}
+];
+const DECO=[
+  {id:"plante",name:"Plante",cost:0,desc:"Grandit avec tes jours ensoleillés"},
+  {id:"tasse",name:"Tasse fumante",cost:1},
+  {id:"livres",name:"Pile de livres",cost:2},
+  {id:"lampe",name:"Lampe de bureau",cost:2},
+  {id:"bougie",name:"Bougie",cost:2},
+  {id:"cadre",name:"Cadre soleil",cost:3},
+  {id:"guirlande",name:"Guirlande lumineuse",cost:3},
+  {id:"chat",name:"Chat au soleil",cost:5}
+];
+const THEMES={
+  bois:{name:"Bois clair",cost:0,wall:"#fbeedd",wall2:"#f6e2c6",desk:"#d9a877",edge:"#b9875a",sill:"#fff7ea",curtain:"#ffd9a8"},
+  pastel:{name:"Pastel",cost:3,wall:"#f8e4ea",wall2:"#f1d3dd",desk:"#f3d3c3",edge:"#dcb09d",sill:"#fff4f6",curtain:"#f7c0cf"},
+  cosy:{name:"Cosy",cost:3,wall:"#ece0cb",wall2:"#ddcdb2",desk:"#8f5d3f",edge:"#704630",sill:"#f6ecdc",curtain:"#c98b5e"}
+};
+
+let state={rays:RULES.daily, day:today(), unlocks:{}, focus:null, workDay:today(), workMs:0, blocks:0, hard:{}, custom:[],
+  light:3, owned:{plante:true,tasse:true,bois:true}, shown:{plante:true,tasse:true}, theme:"bois", streak:0};
+try{const s=JSON.parse(localStorage.getItem("sunrise")||localStorage.getItem("daylight"));if(s)state=Object.assign(state,s);}catch(e){}
+function save(){try{localStorage.setItem("sunrise",JSON.stringify(state));}catch(e){}}
+const $=id=>document.getElementById(id);
+const setHTML=(el,h)=>{if(el._h!==h){el._h=h;el.innerHTML=h;}};
+const fmt=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+function say(t,c=""){const m=$("msg");m.textContent=t;m.className="msg "+c;}
+const nameOf=id=>id==="custom"?"Ma sélection":APPS.find(a=>a.id===id).name;
+const isHard=id=>!!(state.hard[id]||state.hard.phone||(state.hard.custom&&state.custom.includes(id)));
+
+// Nouveau jour : les rayons gardés deviennent de la lumière
+function newDay(){
+  if(state.day===today())return;
+  const kept=state.rays;
+  state.light+=kept; state.streak=kept>0?state.streak+1:0;
+  state.rays=RULES.daily; state.unlocks={}; state.day=today(); save();
+  say(kept?`Bonjour ! Tes ${kept} rayon${kept>1?"s":""} gardé${kept>1?"s":""} hier sont devenus de la lumière.`:"Bonjour ! Tes 5 rayons sont de retour.","ok");
+}
+
+/* ---------- Météo réelle (Open-Meteo, gratuit, sans compte) ---------- */
+const WX={
+  clear:{label:"ensoleillé"}, partly:{label:"quelques nuages"}, cloudy:{label:"nuageux"},
+  fog:{label:"brumeux"}, rain:{label:"pluvieux"}, snow:{label:"neigeux"}, storm:{label:"orageux"}
+};
+function wxKind(c){
+  if(c===0)return"clear"; if(c<=2)return"partly"; if(c===3)return"cloudy";
+  if(c===45||c===48)return"fog"; if((c>=71&&c<=77)||c===85||c===86)return"snow";
+  if(c>=95)return"storm"; return"rain";
+}
+let wx=null, wxPreview=false;
+try{wx=JSON.parse(localStorage.getItem("sunrise-wx"));}catch(e){}
+async function loadWeather(lat,lon,place){
+  const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,temperature_2m`);
+  if(!r.ok)throw new Error("météo");
+  const d=await r.json();
+  wx={kind:wxKind(d.current.weather_code),temp:Math.round(d.current.temperature_2m),place,lat,lon,at:Date.now()};
+  try{localStorage.setItem("sunrise-wx",JSON.stringify(wx));}catch(e){}
+  wxPreview=false; render();
+}
+function weatherUnavailable(){
+  // Hors de l'appli installée (aperçu), la météo réelle n'est pas joignable : on propose de tester les ambiances.
+  wxPreview=true; if(!wx)wx={kind:"clear",temp:null,place:null};
+  $("cityBtn").hidden=true; $("cityForm").hidden=true; $("preview").hidden=false; render();
+}
+function refreshWeather(){
+  if(wx&&wx.lat!=null&&!wxPreview){loadWeather(wx.lat,wx.lon,wx.place).catch(weatherUnavailable);return;}
+  if(!navigator.geolocation){$("cityForm").hidden=false;return;}
+  navigator.geolocation.getCurrentPosition(
+    pos=>loadWeather(pos.coords.latitude.toFixed(2),pos.coords.longitude.toFixed(2),null).catch(weatherUnavailable),
+    ()=>{if(wx&&wx.lat!=null)return;$("wtext").textContent="Indique ta ville pour voir la vraie météo.";$("cityForm").hidden=false;},
+    {timeout:8000,maximumAge:1800000});
+}
+$("cityBtn").onclick=()=>{$("cityForm").hidden=!$("cityForm").hidden;if(!$("cityForm").hidden)$("cityInput").focus();};
+$("cityForm").onsubmit=async e=>{
+  e.preventDefault(); const q=$("cityInput").value.trim(); if(!q)return;
+  $("wtext").textContent="Je cherche ta ville…";
+  try{
+    const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=fr`);
+    const d=await r.json(); const c=d.results&&d.results[0];
+    if(!c){$("wtext").textContent="Ville introuvable. Vérifie l'orthographe.";return;}
+    await loadWeather(c.latitude,c.longitude,c.name); $("cityForm").hidden=true;
+  }catch(err){weatherUnavailable();}
+};
+$("preview").onclick=e=>{const b=e.target.closest("button[data-wx]");if(!b)return;wx={kind:b.dataset.wx,temp:null,place:null};render();};
+function renderWeather(){
+  if(!wx)return;
+  if(wxPreview){
+    $("wtext").textContent="La vraie météo s'affiche dans l'appli installée. En attendant, essaie les ambiances :";
+    setHTML($("preview"),Object.entries(WX).map(([k,v])=>`<button data-wx="${k}" aria-pressed="${wx.kind===k}">${v.label}</button>`).join(""));
+    return;
+  }
+  $("wtext").textContent=`Dehors${wx.place?" à "+wx.place:""} : ${wx.temp}°, ${WX[wx.kind].label}.`;
+}
+function cloud(x,y,k,fill){return `<g fill="${fill}" transform="translate(${x} ${y}) scale(${k})"><circle cx="0" cy="0" r="12"/><circle cx="14" cy="-6" r="15"/><circle cx="30" cy="0" r="11"/><rect x="-10" y="0" width="50" height="11" rx="5.5"/></g>`;}
+function weatherLayer(night){
+  const k=wx?wx.kind:"clear";
+  const cf=night?"#5c5288":(k==="storm"?"#8e8a9c":k==="rain"||k==="cloudy"?"#d9dde6":"#ffffff");
+  let back="",front="";
+  const veil={cloudy:["#b9bfcc",.35],rain:["#8f98aa",.42],storm:["#3e3a52",.5],fog:["#f4f1ec",.55],snow:["#eef2f8",.3]}[k];
+  if(veil)back+=`<rect x="222" y="32" width="146" height="136" fill="${veil[0]}" opacity="${veil[1]}"/>`;
+  if(k==="partly")back+=cloud(240,60,.9,cf);
+  if(["cloudy","rain","storm","snow"].includes(k))front+=cloud(232,58,1,cf)+cloud(318,104,.85,cf)+cloud(268,40,.7,cf);
+  if(k==="rain"||k==="storm"){for(let i=0;i<14;i++){const x=228+i*10.5,d=(i%5)*.17;front+=`<line class="drop" style="animation-delay:-${d}s" x1="${x}" y1="${40+(i%4)*8}" x2="${x-3}" y2="${50+(i%4)*8}" stroke="#7d9cc4" stroke-width="2" stroke-linecap="round"/>`;}}
+  if(k==="storm")front+=`<path d="M300 66l-10 22h9l-7 20 18-27h-10l7-15z" fill="#ffe27a"/>`;
+  if(k==="snow"){for(let i=0;i<16;i++){const x=228+(i*37)%140,d=(i*.7)%6;front+=`<circle class="flake" style="animation-delay:-${d}s" cx="${x}" cy="${36+(i*13)%40}" r="2.2" fill="#ffffff"/>`;}}
+  if(k==="fog")front+=`<g stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity=".8"><path d="M232 120h70M262 134h90M240 148h60"/></g>`;
+  return{back,front};
+}
+
+/* ---------- Scène du bureau ---------- */
+function phase(){
+  const h=new Date().getHours();
+  if(h>=7&&h<10)return{key:"aube",label:"l'aube",sky:["#ffb9a3","#ffe6b8"],sun:"#ffcf6b",x:262,y:132};
+  if(h>=10&&h<17)return{key:"midi",label:"le plein jour",sky:["#a7d8f3","#eaf7ff"],sun:"#ffcd3a",x:300,y:76};
+  if(h>=17&&h<21)return{key:"golden",label:"la golden hour",sky:["#ff9e5c","#ffd99e"],sun:"#ffb43f",x:334,y:128};
+  return{key:"nuit",label:"la nuit",sky:["#29234f","#4f437c"],sun:"#fff1bf",x:300,y:76};
+}
+function plantStage(){return state.streak>=7?4:state.streak>=4?3:state.streak>=2?2:1;}
+function scene(){
+  const p=phase(), t=THEMES[state.theme], sh=state.shown, night=p.key==="nuit";
+  const rays=Array.from({length:5},(_,i)=>{
+    const a=(-90+i*72)*Math.PI/180, r1=22, r2=36;
+    const on=i<state.rays;
+    return `<line x1="${(p.x+Math.cos(a)*r1).toFixed(1)}" y1="${(p.y+Math.sin(a)*r1).toFixed(1)}" x2="${(p.x+Math.cos(a)*r2).toFixed(1)}" y2="${(p.y+Math.sin(a)*r2).toFixed(1)}" stroke="${p.sun}" stroke-width="6" stroke-linecap="round" opacity="${on?1:.18}"/>`;
+  }).join("");
+  const wl=weatherLayer(night), dim=wx&&["cloudy","rain","storm","fog","snow"].includes(wx.kind)?.5:1;
+  const beam=((0.05+0.045*state.rays)*dim).toFixed(2);
+  const stars=night?'<g fill="#fff8dc"><circle cx="240" cy="50" r="1.4"/><circle cx="352" cy="58" r="1.2"/><circle cx="262" cy="104" r="1"/><circle cx="345" cy="120" r="1.4"/></g>':"";
+  const body=night?`<circle cx="${p.x}" cy="${p.y}" r="16" fill="${p.sun}"/><circle cx="${p.x+7}" cy="${p.y-5}" r="13" fill="#3a3166"/>`:`<circle cx="${p.x}" cy="${p.y}" r="34" fill="${p.sun}" opacity=".25"/><circle cx="${p.x}" cy="${p.y}" r="16" fill="${p.sun}"/>`;
+  let s=`<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.sky[0]}"/><stop offset="1" stop-color="${p.sky[1]}"/></linearGradient>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t.wall}"/><stop offset="1" stop-color="${t.wall2}"/></linearGradient>
+    <clipPath id="win"><rect x="222" y="32" width="146" height="136" rx="6"/></clipPath>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5"/></filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#wall)"/>
+  <g clip-path="url(#win)"><rect x="222" y="32" width="146" height="136" fill="url(#sky)"/>${stars}${wl.back}${body}${rays}${wl.front}
+    <path d="M222 150 q30-18 60-6 t86-4 v28 h-146z" fill="${night?"#3f3670":"#cfe3b8"}" opacity=".9"/></g>
+  <rect x="219" y="29" width="152" height="142" rx="8" fill="none" stroke="${t.sill}" stroke-width="7"/>
+  <path d="M295 32v136M222 100h146" stroke="${t.sill}" stroke-width="4"/>
+  <rect x="208" y="168" width="174" height="9" rx="3" fill="${t.sill}"/>
+  <path d="M206 18h178" stroke="${t.edge}" stroke-width="3" stroke-linecap="round"/>
+  <path d="M204 20h22c-2 40 2 80-4 150h-20c6-50 0-100 2-150z" fill="${t.curtain}" opacity=".92"/>
+  <path d="M364 20h22c2 50-4 100 2 150h-20c-6-70-2-110-4-150z" fill="${t.curtain}" opacity=".92"/>
+  <polygon points="222,177 368,177 340,236 120,236" fill="${p.sun}" opacity="${night?0.04:beam}"/>`;
+  if(sh.cadre)s+=`<g><rect x="42" y="48" width="74" height="60" rx="4" fill="#fffaf0" stroke="${t.edge}" stroke-width="5"/><circle cx="79" cy="74" r="10" fill="#ffc94d"/><path d="M48 104l20-16 14 10 12-8 18 14z" fill="#ffab85"/></g>`;
+  if(sh.guirlande){const pts=[[226,40],[244,47],[262,52],[280,55],[298,55],[316,52],[334,47],[352,41],[366,37]];
+    s+=`<path d="M216 34 Q295 70 374 34" fill="none" stroke="#8a7462" stroke-width="1.4"/>`+pts.map(([x,y])=>`<circle cx="${x}" cy="${y+2}" r="5" fill="#ffe28a" filter="url(#glow)"/><circle cx="${x}" cy="${y+2}" r="2.6" fill="#fff4c4"/>`).join("");}
+  if(sh.plante){const n=plantStage(), top=150-n*14;
+    let leaves="";for(let i=1;i<=n;i++){const y=150-i*14+4;leaves+=`<ellipse cx="${242-9}" cy="${y}" rx="9" ry="4.5" fill="#86a86f" transform="rotate(-28 ${233} ${y})"/><ellipse cx="${242+9}" cy="${y-5}" rx="9" ry="4.5" fill="#9cbd82" transform="rotate(28 ${251} ${y-5})"/>`;}
+    s+=`<path d="M242 150 V${top}" stroke="#6f8f5a" stroke-width="2.5"/>${leaves}<path d="M229 149h26l-3 20h-20z" fill="#ec8f6c"/><rect x="227" y="146" width="30" height="6" rx="2" fill="#f4a385"/>`;}
+  if(sh.chat)s+=`<g><path d="M360 166 q14-2 10-14" stroke="#e8975a" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="342" cy="158" rx="22" ry="11" fill="#f2a865"/><circle cx="322" cy="154" r="10" fill="#f2a865"/><path d="M314 147l2-9 6 6zM324 145l5-8 3 9z" fill="#f2a865"/><path d="M317 155q3 2 5 0M325 155q2 2 4 0" stroke="#7a4a2a" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M336 152q6 3 12 0" stroke="#e8975a" stroke-width="2" fill="none"/></g>`;
+  s+=`<rect x="0" y="236" width="400" height="12" fill="${t.desk}"/><rect x="0" y="248" width="400" height="52" fill="${t.edge}"/><rect x="150" y="258" width="100" height="22" rx="4" fill="none" stroke="${t.desk}" stroke-width="2"/><rect x="190" y="267" width="20" height="4" rx="2" fill="${t.desk}"/>`;
+  if(sh.lampe)s+=`<g><circle cx="88" cy="214" r="26" fill="#ffe7a3" opacity=".45" filter="url(#glow)"/><ellipse cx="54" cy="234" rx="18" ry="4" fill="#5b4a3e"/><path d="M54 232l14-34 26 14" stroke="#5b4a3e" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M80 196l26 10-10 18-26-12z" fill="#ffbf2f"/></g>`;
+  if(sh.livres)s+=`<g><rect x="132" y="224" width="66" height="12" rx="2" fill="#8fae7a"/><rect x="138" y="213" width="58" height="11" rx="2" fill="#ffab85"/><rect x="134" y="203" width="60" height="10" rx="2" fill="#f6d27a"/><path d="M140 229h40M144 218h32" stroke="#fff8ea" stroke-width="1.5" opacity=".7"/></g>`;
+  if(sh.tasse)s+=`<g><path d="M222 212h26v17a7 7 0 0 1-7 7h-12a7 7 0 0 1-7-7z" fill="#fffaf0" stroke="${t.edge}" stroke-width="2"/><path d="M248 216h4a5 5 0 0 1 0 10h-4" fill="none" stroke="${t.edge}" stroke-width="2"/><path d="M229 206q-4-6 0-11M237 206q-4-6 0-12M244 206q-4-6 0-10" stroke="#c9b6a6" stroke-width="1.8" fill="none" stroke-linecap="round"/></g>`;
+  if(sh.bougie)s+=`<g><ellipse cx="291" cy="203" rx="9" ry="12" fill="#ffd56b" opacity=".5" filter="url(#glow)"/><rect x="283" y="210" width="16" height="26" rx="3" fill="#fff3e2"/><path d="M291 210v-5" stroke="#5b4a3e" stroke-width="1.5"/><ellipse cx="291" cy="201" rx="3.4" ry="6" fill="#ffb43f"/></g>`;
+  s+=`<g><path d="M312 234l40-6 34 6-38 4z" fill="#fffaf0" stroke="${t.edge}" stroke-width="1.5"/><path d="M352 228v8" stroke="${t.edge}" stroke-width="1.2"/></g></svg>`;
+  return s;
+}
+
+/* ---------- Bureau : rayons ---------- */
+const LOCK='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+const OPEN='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>';
+function renderApps(){
+  const now=Date.now();
+  setHTML($("apps"),APPS.map(a=>{
+    const until=state.unlocks[a.id]||0, open=until>now&&!isHard(a.id), left=Math.ceil((until-now)/1000);
+    const st=isHard(a.id)?"Bloqué sans fin":open?"Ouvert · "+fmt(left):"Fermé";
+    return `<li class="item"><div class="ic">${open?OPEN:LOCK}</div><div class="nm"><strong>${a.name}</strong><span class="state ${open?"open":""}">${st}</span></div>
+      <button class="small soft" data-id="${a.id}" ${open||isHard(a.id)||state.rays<a.cost?"disabled":""}>${a.cost} rayon${a.cost>1?"s":""}</button></li>`;
+  }).join(""));
+}
+$("apps").onclick=e=>{
+  const b=e.target.closest("button[data-id]");if(!b)return;
+  const a=APPS.find(x=>x.id===b.dataset.id);if(state.rays<a.cost)return;
+  state.rays-=a.cost;state.unlocks[a.id]=Date.now()+a.min*60000;save();
+  say(`${a.name} est ouvert pour ${a.min} min. Profite bien !`,"ok");render();
+};
+
+/* ---------- Focus : chrono de travail ---------- */
+const BLOCK=25*60000;
+const hms=ms=>{const t=Math.floor(ms/1000);return [Math.floor(t/3600),Math.floor(t/60)%60,t%60].map(n=>String(n).padStart(2,"0")).join(":");};
+const human=ms=>{const m=Math.floor(ms/60000);return m<60?`${m} min`:`${Math.floor(m/60)} h ${String(m%60).padStart(2,"0")}`;};
+function workToday(){if(state.workDay!==today()){state.workDay=today();state.workMs=0;state.blocks=0;}}
+function elapsed(){const f=state.focus;return f?f.acc+(f.running?Date.now()-f.since:0):0;}
+function todayMs(){workToday();return state.workMs+elapsed();}
+let wake=null;
+async function keepAwake(){try{wake=await navigator.wakeLock?.request("screen");}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&state.focus?.running)keepAwake();});
+async function openDesk(){
+  $("focusView").hidden=false; keepAwake();
+  try{await document.documentElement.requestFullscreen?.();}catch(e){}
+  try{await screen.orientation?.lock?.("landscape");}catch(e){}
+  render();
+}
+async function closeDesk(){
+  $("focusView").hidden=true;
+  try{if(document.fullscreenElement)await document.exitFullscreen();}catch(e){}
+  try{screen.orientation?.unlock?.();}catch(e){}
+  render();
+}
+function startFocus(){if(!state.focus)state.focus={acc:0,since:Date.now(),running:true};else if(!state.focus.running){state.focus.since=Date.now();state.focus.running=true;}save();}
+function pauseFocus(){const f=state.focus;if(!f)return;if(f.running){f.acc+=Date.now()-f.since;f.running=false;}else{f.since=Date.now();f.running=true;keepAwake();}save();render();}
+function stopFocus(){
+  const f=state.focus;if(!f)return;workToday();
+  const ms=elapsed();state.workMs+=ms;state.focus=null;save();try{wake?.release?.();}catch(e){}
+  say(`Bravo, ${human(ms)} de travail ! Aujourd'hui : ${human(state.workMs)}.`,"ok");closeDesk();
+}
+$("enter").onclick=()=>{startFocus();openDesk();};
+$("pause").onclick=pauseFocus; $("fpause").onclick=pauseFocus;
+$("stop").onclick=stopFocus;
+$("fexit").onclick=()=>{closeDesk();if(state.focus?.running)say("Le chrono continue. Reviens dans ton bureau quand tu veux.");};
+function checkBlocks(){
+  workToday(); const n=Math.floor(todayMs()/BLOCK);
+  if(n>(state.blocks||0)){state.light+=n-(state.blocks||0);state.blocks=n;save();say("25 min de travail : +1 lumière pour ton bureau !","ok");}
+}
+function renderFocus(){
+  const f=state.focus, e=elapsed(), t=todayMs();
+  $("timer").textContent=hms(e); $("fchrono").textContent=hms(e);
+  $("today").textContent=$("ftoday").textContent=`Aujourd'hui : ${human(t)}`;
+  const inBlock=t%BLOCK; $("progress").style.width=(100*inBlock/BLOCK)+"%";
+  $("nextLight").textContent=`Encore ${Math.ceil((BLOCK-inBlock)/60000)} min avant ta prochaine lumière.`;
+  $("enter").textContent=f?"Retourner dans mon bureau":"Entrer dans mon bureau";
+  $("pause").disabled=$("stop").disabled=!f;
+  const lbl=f&&!f.running?"Reprendre":"Pause"; $("pause").textContent=lbl; $("fpause").textContent=lbl;
+  $("fstate").textContent=f&&!f.running?"En pause":"Au travail";
+  if(!$("focusView").hidden){
+    const box=$("fscene"), t=THEMES[state.theme];
+    setHTML(box,scene());
+    const svg=box.querySelector("svg"); svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+    // Le mur et le bureau se prolongent autour de la scène, quelle que soit l'orientation
+    const W=box.clientWidth,H=box.clientHeight,h=Math.min(W*.75,H),top=Math.max(0,(H-h)/2),cut=H?((top+h*248/300)/H*100).toFixed(1):50;
+    box.style.background=`linear-gradient(to bottom,${t.wall} 0,${t.wall2} ${cut}%,${t.edge} ${cut}%)`;
+  }
+}
+
+/* ---------- Blocage sans fin ---------- */
+const exits={};
+function renderLock(){
+  const ids=Object.keys(state.hard);
+  const free=[...APPS,{id:"custom",name:"Personnalisé"}].filter(a=>!state.hard[a.id]);
+  const keep=$("target").value;
+  setHTML($("target"),free.map(a=>`<option value="${a.id}">${a.name}</option>`).join(""));
+  if(free.some(a=>a.id===keep))$("target").value=keep;
+  $("target").disabled=$("hardOn").disabled=!free.length;
+  $("customBox").hidden=$("target").value!=="custom";
+  setHTML($("customApps"),APPS.filter(a=>a.id!=="phone").map(a=>`<label><input type="checkbox" id="c-${a.id}" value="${a.id}">${a.name}</label>`).join(""));
+  setHTML($("hardlist"),ids.map(id=>{
+    const x=exits[id], label=id==="custom"?"Ma sélection : "+state.custom.map(nameOf).join(", "):nameOf(id);
+    const since=new Date(state.hard[id]).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+    let note=`Bloqué depuis ${since}`, btns=`<button class="ghost small" data-act="ask" data-id="${id}">Arrêter</button>`;
+    if(x){const left=Math.max(0,Math.ceil((x.at-Date.now())/1000));
+      const keepB=`<button class="primary small" data-act="keep" data-id="${id}">Garder</button>`;
+      if(left>0){note=`Attends encore ${left} s…`;btns=keepB;}
+      else if(x.step===1){note="1re confirmation : tu veux vraiment arrêter ?";btns=keepB+`<button class="ghost small" data-act="c1" data-id="${id}">Oui</button>`;}
+      else{note="2e confirmation : dernier mot ?";btns=keepB+`<button class="ghost small" data-act="c2" data-id="${id}">Arrêter</button>`;}}
+    return `<li class="item"><div class="ic">${LOCK}</div><div class="nm"><strong>${label}</strong><span class="state">${note}</span></div><div class="row" style="flex-wrap:nowrap">${btns}</div></li>`;
+  }).join(""));
+}
+$("target").onchange=()=>{$("customBox").hidden=$("target").value!=="custom";};
+$("hardOn").onclick=()=>{
+  const id=$("target").value;if(!id)return;
+  if(id==="custom"){
+    const picked=[...$("customApps").querySelectorAll("input:checked")].map(i=>i.value);
+    if(!picked.length){say("Coche au moins une app à bloquer.","warn");return;}
+    state.custom=picked;picked.forEach(p=>delete state.unlocks[p]);state.hard.custom=Date.now();
+  }else{state.hard[id]=Date.now();if(id==="phone")state.unlocks={};else delete state.unlocks[id];}
+  save();say(`${nameOf(id)} : blocage sans fin activé.`,"warn");render();
+};
+$("hardlist").onclick=e=>{
+  const b=e.target.closest("button[data-act]");if(!b)return;
+  const id=b.dataset.id, act=b.dataset.act;
+  if(act==="ask")exits[id]={at:Date.now()+RULES.exitWait*1000,step:1};
+  if(act==="keep"){delete exits[id];say(`Bien joué, ${nameOf(id)} reste bloqué.`,"ok");}
+  if(act==="c1")exits[id].step=2;
+  if(act==="c2"){delete exits[id];delete state.hard[id];if(id==="custom")state.custom=[];save();say(`Blocage de ${nameOf(id)} arrêté.`);}
+  render();
+};
+
+/* ---------- Déco ---------- */
+function renderShop(){
+  setHTML($("shop"),DECO.map(d=>{
+    const own=state.owned[d.id], on=state.shown[d.id];
+    const btn=own?`<button class="${on?"ghost":"primary"} small" data-deco="${d.id}">${on?"Ranger":"Poser sur le bureau"}</button>`
+      :`<button class="soft small" data-buy="${d.id}" ${state.light<d.cost?"disabled":""}>Obtenir · ${d.cost} lumière${d.cost>1?"s":""}</button>`;
+    const st=d.id==="plante"?`Jours ensoleillés : ${state.streak}`:own?(on?"Sur ton bureau":"Dans le placard"):"";
+    return `<div class="deco ${on?"on":""}"><strong>${d.name}</strong><span class="state">${st}</span>${btn}</div>`;
+  }).join(""));
+  setHTML($("themes"),Object.entries(THEMES).map(([k,t])=>{
+    const own=state.owned[k];
+    return `<button data-theme-id="${k}" aria-pressed="${state.theme===k}" ${!own&&state.light<t.cost?"disabled":""}>
+      <span class="swatch" style="background:linear-gradient(180deg,${t.wall} 55%,${t.desk} 55%)"></span>${t.name}<span class="state">${own?(state.theme===k?"Choisie":"À toi"):t.cost+" lumières"}</span></button>`;
+  }).join(""));
+}
+$("shop").onclick=e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.buy){const d=DECO.find(x=>x.id===b.dataset.buy);if(state.light<d.cost)return;
+    state.light-=d.cost;state.owned[d.id]=true;state.shown[d.id]=true;say(`${d.name} ajouté à ton bureau.`,"ok");}
+  if(b.dataset.deco){const id=b.dataset.deco;state.shown[id]=!state.shown[id];}
+  save();render();
+};
+$("themes").onclick=e=>{
+  const b=e.target.closest("button[data-theme-id]");if(!b)return;
+  const k=b.dataset.themeId,t=THEMES[k];
+  if(!state.owned[k]){if(state.light<t.cost)return;state.light-=t.cost;state.owned[k]=true;}
+  state.theme=k;save();say(`Ambiance ${t.name.toLowerCase()} appliquée.`,"ok");render();
+};
+
+/* ---------- Onglets ---------- */
+document.querySelector(".tabs").onclick=e=>{
+  const b=e.target.closest("button[data-go]");if(!b)return;
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
+  document.querySelectorAll("[data-tab]").forEach(s=>s.hidden=s.dataset.tab!==b.dataset.go);
+  scrollTo({top:0});
+};
+
+/* ---------- Rendu ---------- */
+function render(){
+  $("rays").textContent=state.rays; $("light").textContent=state.light;
+  setHTML($("scene"),scene());
+  const p=phase();
+  $("caption").textContent=`C'est ${p.label}. ${state.rays} rayon${state.rays>1?"s":""} entre${state.rays>1?"nt":""} encore par ta fenêtre.`;
+  renderFocus();
+  renderApps();renderLock();renderShop();renderWeather();
+}
+setInterval(()=>{
+  newDay();
+  if(state.focus?.running)checkBlocks();
+  render();
+},1000);
+newDay();render();
+refreshWeather();setInterval(refreshWeather,30*60000);
+</script>
+<script>
+if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
+</script>
+</body>
+</html>
