@@ -6,6 +6,11 @@
 
     <!-- Pour reconnaître l'écran d'accueil (jamais bloqué) -->
     <queries>
+        <!-- Pour lister les apps du téléphone dans la sélection personnalisée -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.HOME" />

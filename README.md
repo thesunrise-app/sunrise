@@ -15,7 +15,7 @@ Chaque matin, le soleil se lève. Une appli de déconnexion qui fonctionne à la
 2. Ouvre le fichier. Android demande d'autoriser l'installation depuis ton navigateur : accepte.
 3. Ouvre Sunrise, puis touche **Activer le blocage** et active **Sunrise – blocage des apps** dans les réglages d'accessibilité.
 
-Ensuite, Instagram, TikTok, Snapchat et YouTube restent fermés tant que tu ne prends pas de pause dans Sunrise. L'écran d'accueil, les réglages et le téléphone (appels) ne sont jamais bloqués.
+Ensuite, Instagram, TikTok, Snapchat et YouTube restent fermés tant que tu ne prends pas de pause dans Sunrise. Dans Blocage, puis Personnalisé, tu peux choisir n'importe quelle app de ton téléphone pour un blocage sans fin. L'écran d'accueil, les réglages et le téléphone (appels) ne sont jamais bloqués.
 
 ## Installer la version web
 

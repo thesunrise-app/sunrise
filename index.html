@@ -81,6 +81,11 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .native{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px;border-radius:16px;border:2px dashed var(--sun);background:color-mix(in srgb,var(--sun-soft) 60%,transparent)}
 .native p{margin:0;flex:1 1 200px;font-size:.92rem;font-weight:600}
 .native.on{border-style:solid;border-color:var(--sage);background:transparent}
+.search{font:inherit;width:100%;padding:9px 12px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink);margin-bottom:10px}
+#customApps.phoneapps{max-height:320px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+#customApps.phoneapps label{border-radius:12px;padding:6px 8px;min-width:0}
+#customApps.phoneapps label span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#customApps img{width:24px;height:24px;border-radius:6px;flex:none}
 .timer{font-family:var(--display);font-size:4.4rem;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;line-height:1}
 .bar{height:12px;border-radius:99px;background:var(--line);overflow:hidden;border:2px solid var(--line)}
 .bar i{display:block;height:100%;width:0;background:var(--sun);transition:width .5s linear}
@@ -220,6 +225,7 @@ fieldset legend{padding:0 6px}
     </div>
     <fieldset id="customBox" hidden>
       <legend class="state">Choisis les apps les plus nocives pour toi</legend>
+      <input id="appSearch" class="search" placeholder="Chercher une app…" autocomplete="off" hidden>
       <div id="customApps" class="checks"></div>
     </fieldset>
     <ul class="list" id="hardlist"></ul>
@@ -298,15 +304,20 @@ let state={daily:RULES.daily, nextDaily:null, pauses:RULES.daily, day:today(), u
   }catch(e){}
 })();
 const AND=window.SunriseAndroid||null; // présent seulement dans l'appli Android
-function syncNative(){if(!AND)return;try{AND.sync(JSON.stringify({unlocks:state.unlocks,hard:state.hard,custom:state.custom,
-  apps:APPS.filter(a=>a.id!=="phone").map(a=>({id:a.id,name:a.name,pkgs:a.pkgs}))}));}catch(e){}}
+let phoneApps=null; // [{pkg,name,icon}] : toutes les apps du téléphone (Android)
+function loadPhoneApps(){if(!AND||phoneApps)return;try{phoneApps=JSON.parse(AND.getApps()).sort((a,b)=>a.name.localeCompare(b.name,"fr"));}catch(e){phoneApps=[];}}
+function syncNative(){if(!AND)return;try{
+  const extra=state.custom.filter(id=>id.startsWith("pkg:")).map(id=>({id,name:nameOf(id),pkgs:[id.slice(4)],managed:false}));
+  AND.sync(JSON.stringify({unlocks:state.unlocks,hard:state.hard,custom:state.custom,
+  apps:[...APPS.filter(a=>a.id!=="phone").map(a=>({id:a.id,name:a.name,pkgs:a.pkgs,managed:true})),...extra]}));}catch(e){}}
 function save(){try{localStorage.setItem("sunrise2",JSON.stringify(state));}catch(e){}syncNative();}
 const $=id=>document.getElementById(id);
 const setHTML=(el,h)=>{if(el._h!==h){el._h=h;el.innerHTML=h;}};
 const fmt=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 const plural=(n,w)=>`${n} ${w}${n>1?"s":""}`;
 function say(t,c=""){const m=$("msg");m.textContent=t;m.className="msg "+c;}
-const nameOf=id=>id==="custom"?"Ma sélection":APPS.find(a=>a.id===id).name;
+state.customNames=state.customNames||{};
+const nameOf=id=>id==="custom"?"Ma sélection":id.startsWith("pkg:")?(state.customNames[id]||id.slice(4)):APPS.find(a=>a.id===id).name;
 const isHard=id=>!!(state.hard[id]||state.hard.phone||(state.hard.custom&&state.custom.includes(id)));
 
 function newDay(){
@@ -733,9 +744,9 @@ function renderLock(){
   if(free.some(a=>a.id===keep))$("target").value=keep;
   $("target").disabled=$("hardOn").disabled=!free.length;
   $("customBox").hidden=$("target").value!=="custom";
-  setHTML($("customApps"),APPS.filter(a=>a.id!=="phone").map(a=>`<label><input type="checkbox" id="c-${a.id}" value="${a.id}">${a.name}</label>`).join(""));
+  renderCustomApps();
   setHTML($("hardlist"),ids.map(id=>{
-    const x=exits[id],label=id==="custom"?"Ma sélection : "+state.custom.map(nameOf).join(", "):nameOf(id);
+    const x=exits[id],label=id==="custom"?"Ma sélection : "+(state.custom.length>4?state.custom.slice(0,4).map(nameOf).join(", ")+` et ${state.custom.length-4} autres`:state.custom.map(nameOf).join(", ")):nameOf(id);
     const since=new Date(state.hard[id]).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
     let note=`Bloqué depuis ${since}`,btns=`<button class="ghost small" data-act="ask" data-id="${id}">Arrêter</button>`;
     if(x){const left=Math.max(0,Math.ceil((x.at-Date.now())/1000)),keepB=`<button class="primary small" data-act="keep" data-id="${id}">Garder</button>`;
@@ -745,11 +756,27 @@ function renderLock(){
     return `<li class="item"><div class="ic">${LOCK}</div><div class="nm"><strong>${label}</strong><span class="state">${note}</span></div><div class="row" style="flex-wrap:nowrap">${btns}</div></li>`;
   }).join(""));
 }
-$("target").onchange=()=>{$("customBox").hidden=$("target").value!=="custom";};
+// La sélection : les 4 apps de base sur le web, toutes les apps du téléphone dans l'appli Android
+const picked=new Set();
+function renderCustomApps(){
+  if(AND&&$("target").value==="custom")loadPhoneApps();
+  const box=$("customApps"), q=($("appSearch").value||"").trim().toLowerCase();
+  if(phoneApps&&phoneApps.length){
+    $("appSearch").hidden=false;box.classList.add("phoneapps");
+    const ids=new Set(APPS.flatMap(a=>a.pkgs||[]));
+    const list=phoneApps.filter(a=>!q||a.name.toLowerCase().includes(q));
+    setHTML(box,list.map(a=>{const base=APPS.find(x=>(x.pkgs||[]).includes(a.pkg)),id=base?base.id:"pkg:"+a.pkg;
+      return `<label><input type="checkbox" value="${id}" data-name="${a.name.replace(/"/g,"&quot;")}">${a.icon?`<img src="data:image/png;base64,${a.icon}" alt="">`:""}<span>${a.name.replace(/</g,"&lt;")}</span></label>`;}).join("")||`<p class="note">Aucune app ne correspond.</p>`);
+  }else setHTML(box,APPS.filter(a=>a.id!=="phone").map(a=>`<label><input type="checkbox" id="c-${a.id}" value="${a.id}">${a.name}</label>`).join(""));
+  box.querySelectorAll("input[type=checkbox]").forEach(i=>i.checked=picked.has(i.value));
+}
+$("customApps").addEventListener("change",e=>{const i=e.target;if(i.type!=="checkbox")return;if(i.checked){picked.add(i.value);if(i.dataset.name&&i.value.startsWith("pkg:"))state.customNames[i.value]=i.dataset.name;}else picked.delete(i.value);});
+$("appSearch").oninput=renderCustomApps;
+$("target").onchange=()=>{$("customBox").hidden=$("target").value!=="custom";renderCustomApps();};
 $("hardOn").onclick=()=>{const id=$("target").value;if(!id)return;
-  if(id==="custom"){const picked=[...$("customApps").querySelectorAll("input:checked")].map(i=>i.value);
-    if(!picked.length){say("Coche au moins une app à bloquer.","warn");return;}
-    state.custom=picked;picked.forEach(p=>delete state.unlocks[p]);state.hard.custom=Date.now();}
+  if(id==="custom"){const sel=[...picked];
+    if(!sel.length){say("Coche au moins une app à bloquer.","warn");return;}
+    state.custom=sel;sel.forEach(p=>delete state.unlocks[p]);state.hard.custom=Date.now();picked.clear();$("appSearch").value="";}
   else{state.hard[id]=Date.now();if(id==="phone")state.unlocks={};else delete state.unlocks[id];}
   save();say(`${nameOf(id)} : blocage sans fin activé.`,"warn");render();};
 $("hardlist").onclick=e=>{const b=e.target.closest("button[data-act]");if(!b)return;const id=b.dataset.id,act=b.dataset.act;

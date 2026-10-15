@@ -6,7 +6,10 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
+import android.util.Base64
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
@@ -19,7 +22,9 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.webkit.WebViewAssetLoader
+import org.json.JSONArray
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 
 /**
  * L'écran de Sunrise : l'interface (chambre, petit soleil, pauses…) est la même que sur le web,
@@ -120,6 +125,32 @@ class MainActivity : Activity() {
     inner class Bridge {
         @JavascriptInterface
         fun sync(json: String) = Rules.save(this@MainActivity, json)
+
+        /** Toutes les apps qu'on peut ouvrir depuis l'écran d'accueil, avec leur nom et une petite icône. */
+        @JavascriptInterface
+        fun getApps(): String {
+            val pm = packageManager
+            val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+            val out = JSONArray()
+            val seen = HashSet<String>()
+            for (ri in pm.queryIntentActivities(launcher, 0)) {
+                val pkg = ri.activityInfo.packageName
+                if (pkg == packageName || !seen.add(pkg)) continue
+                val o = JSONObject().put("pkg", pkg).put("name", ri.loadLabel(pm).toString())
+                try {
+                    val d = ri.loadIcon(pm)
+                    val bmp = Bitmap.createBitmap(48, 48, Bitmap.Config.ARGB_8888)
+                    val c = Canvas(bmp)
+                    d.setBounds(0, 0, 48, 48)
+                    d.draw(c)
+                    val bos = ByteArrayOutputStream()
+                    bmp.compress(Bitmap.CompressFormat.PNG, 100, bos)
+                    o.put("icon", Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP))
+                } catch (e: Exception) { }
+                out.put(o)
+            }
+            return out.toString()
+        }
 
         @JavascriptInterface
         fun isEnabled(): Boolean = Rules.serviceEnabled(this@MainActivity)

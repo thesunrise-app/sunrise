@@ -10,6 +10,7 @@ import org.json.JSONObject
  *  - unlocks : app ouverte jusqu'à telle heure grâce à une pause ("phone" = tout le téléphone)
  *  - hard    : blocages sans fin ("phone", une app, ou "custom" pour la sélection)
  *  - apps    : les apps suivies et leurs noms de paquet Android
+ *              (managed=false : app ajoutée à "ma sélection", bloquée seulement pendant ce blocage)
  */
 object Rules {
 
@@ -51,6 +52,8 @@ object Rules {
             val name = a.optString("name", "Cette app")
             val hardBlocked = hard.has(id) || hard.has("phone") || (hard.has("custom") && custom.containsString(id))
             if (hardBlocked) return Verdict(true, name)
+            // Les apps ajoutées seulement à "ma sélection" ne sont pas fermées par défaut.
+            if (!a.optBoolean("managed", true)) return null
             if (phoneOpen || unlocks.optDouble(id, 0.0) > now) return Verdict(false, name)
             return Verdict(true, name) // fermée par défaut, tant qu'on ne prend pas de pause
         }
