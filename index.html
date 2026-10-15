@@ -254,7 +254,7 @@ const APPS=[
 const DECO=[
   {id:"tasse",name:"Tasse fumante",cost:2},{id:"crayons",name:"Pot à crayons",cost:2},{id:"lampe",name:"Lampe de bureau",cost:3},
   {id:"posters",name:"Notes et polaroïds",cost:3},{id:"tableau",name:"Petits cadres",cost:4},{id:"horloge",name:"Horloge",cost:4},
-  {id:"guirlande",name:"Guirlande étoiles",cost:5},{id:"guirlandefen",name:"Guirlande fenêtre",cost:4},{id:"fanions",name:"Fanions au-dessus du bureau",cost:4},{id:"guirlandebib",name:"Guirlande bibliothèque",cost:4},{id:"etagere",name:"Étagère plantes et radio",cost:6},{id:"pouf",name:"Pouf",cost:5},
+  {id:"guirlande",name:"Deux guirlandes étoiles",cost:5},{id:"guirlandefen",name:"Guirlande fenêtre",cost:4},{id:"fanions",name:"Fanions au-dessus du bureau",cost:4},{id:"guirlandebib",name:"Guirlande bibliothèque",cost:4},{id:"etagere",name:"Étagère plantes et radio",cost:6},{id:"pouf",name:"Pouf",cost:5},
   {id:"monstera",name:"Grande plante",cost:6},{id:"tapisdoux",name:"Tapis à carreaux",cost:7},{id:"lampadaire",name:"Lampadaire",cost:7},
   {id:"bibliotheque",name:"Bibliothèque",cost:10},{id:"platine",name:"Platine vinyle (bibliothèque)",cost:8},{id:"chaton",name:"Chaton",cost:12}
 ];
@@ -353,7 +353,10 @@ function renderWeather(){
 const OUT="#5b4636", SW=1.9;
 const st=`stroke="${OUT}" stroke-width="${SW}" stroke-linejoin="round" stroke-linecap="round"`;
 const BODY="M0 -25A25 25 0 1 1 0 25A25 25 0 1 1 0 -25Z";
-function sunRays(t){const pts=Array.from({length:12},(_,i)=>{const a=(i*30-90)*Math.PI/180;return[(Math.cos(a)*27).toFixed(1),(Math.sin(a)*27).toFixed(1)];});return pts.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="9" fill="${t.mane}" ${st}/>`).join("")+pts.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="8" fill="${t.mane}"/>`).join("")+`<circle r="27" fill="${t.mane}"/>`;}
+function sunRays(t){
+  let g=[46,40,34].map((r,i)=>`<circle r="${r}" fill="${t.mane}" opacity="${[.1,.14,.18][i]}"/>`).join("");
+  let d="";for(let i=0;i<12;i++){if(i>=5&&i<=7)continue;const a=(i*30-90)*Math.PI/180,r1=31,r2=i%2?37:41;d+=`M${(Math.cos(a)*r1).toFixed(1)} ${(Math.sin(a)*r1).toFixed(1)}L${(Math.cos(a)*r2).toFixed(1)} ${(Math.sin(a)*r2).toFixed(1)}`;}
+  return g+`<path d="${d}" stroke="${OUT}" stroke-width="5.4" stroke-linecap="round"/><path d="${d}" stroke="${t.mane}" stroke-width="3" stroke-linecap="round"/>`;}
 function charSVG(c,work){
   const t=TINTS[c.tint]||TINTS.soleil, HAIR="#8a5a3c";
   // couronne de rayons tout doux, seulement sur le haut de la tête
@@ -498,9 +501,13 @@ function room(work){
     return rod+[L1,R1].map(d=>`<path d="${d}" fill="url(#plaid)" ${st}/><path d="${d}" fill="url(#fold)"/>`).join("")
       +`<path d="${folds(X-15,1)}${folds(X+WB.w+15,-1)}" stroke="${OUT}" stroke-width=".9" opacity=".35" fill="none"/>`+tie(X-15,1)+tie(X+WB.w+15,-1)+rings;})()}`;
   const GD="M10 10Q200 62 390 10", gpt=i=>{const t=i/14,u=1-t;return[u*u*10+2*u*t*200+t*t*390,u*u*10+2*u*t*62+t*t*10];};
-  if(sh.guirlande&&night)lights+=`<path d="${GD}" fill="none" stroke="#ffe28a" stroke-width="10" opacity=".35" filter="url(#bigglow)"/>`;
-  if(sh.guirlande){const pts=Array.from({length:13},(_,i)=>gpt(i+1));
-    s+=`<path d="${GD}" fill="none" stroke="${OUT}" stroke-width="1.2"/>${[[10,10],[390,10]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.6" fill="#c9b6a6" ${st}/>`).join("")}`+pts.map(([x,y])=>`<path transform="translate(${x.toFixed(1)} ${(y+5).toFixed(1)}) scale(.9)" d="M0 -6l1.8 3.8l4.2 .6l-3 3l.7 4.2l-3.7 -2l-3.7 2l.7 -4.2l-3 -3l4.2 -.6z" fill="#ffe28a" stroke="${OUT}" stroke-width="1"/><circle cx="${x.toFixed(1)}" cy="${(y+5).toFixed(1)}" r="6" fill="#ffe28a" opacity=".5" filter="url(#glow)"/>`).join("");}
+  if(sh.guirlande&&night)lights+=`<path d="${GD}M10 10Q200 34 390 10" fill="none" stroke="#ffe28a" stroke-width="10" opacity=".35" filter="url(#bigglow)"/>`;
+  if(sh.guirlande){
+    const star=(x,y,c)=>`<circle cx="${x.toFixed(1)}" cy="${(y+5).toFixed(1)}" r="6" fill="${c}" opacity=".45" filter="url(#glow)"/><path transform="translate(${x.toFixed(1)} ${(y+5).toFixed(1)}) scale(.9)" d="M0 -6l1.8 3.8l4.2 .6l-3 3l.7 4.2l-3.7 -2l-3.7 2l.7 -4.2l-3 -3l4.2 -.6z" fill="${c}" stroke="${OUT}" stroke-width="1"/>`;
+    const GD2="M10 10Q200 34 390 10", gpt2=i=>{const t=i/16,u=1-t;return[u*u*10+2*u*t*200+t*t*390,u*u*10+2*u*t*34+t*t*10];};
+    s+=`<path d="${GD2}" fill="none" stroke="${OUT}" stroke-width="1.1"/>`+Array.from({length:15},(_,i)=>gpt2(i+1)).map(([x,y],i)=>star(x,y-1,i%2?"#fff6d6":"#ffd56b")).join("");
+    s+=`<path d="${GD}" fill="none" stroke="${OUT}" stroke-width="1.2"/>`+Array.from({length:13},(_,i)=>gpt(i+1)).map(([x,y])=>star(x,y,"#ffe28a")).join("");
+    s+=[[10,10],[390,10]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.8" fill="#c9b6a6" ${st}/>`).join("");}
   if(sh.horloge)s+=`<circle cx="166" cy="62" r="20" fill="#9fc0a8" ${st}/><circle cx="166" cy="62" r="15" fill="#fffaf2" ${st}/>${(()=>{const d=new Date(),h=(d.getHours()%12+d.getMinutes()/60)*30,m=d.getMinutes()*6,r=a=>a*Math.PI/180;let ticks="";for(let i=0;i<12;i++){const a=r(i*30);ticks+=`M${(166+Math.sin(a)*11.5).toFixed(1)} ${(62-Math.cos(a)*11.5).toFixed(1)}L${(166+Math.sin(a)*13.5).toFixed(1)} ${(62-Math.cos(a)*13.5).toFixed(1)}`;}return `<path d="${ticks}" stroke="${OUT}" stroke-width="1"/><path d="M166 62L${(166+Math.sin(r(h))*7).toFixed(1)} ${(62-Math.cos(r(h))*7).toFixed(1)}M166 62L${(166+Math.sin(r(m))*11).toFixed(1)} ${(62-Math.cos(r(m))*11).toFixed(1)}" ${st}/>`;})()}`;
   if(sh.tableau)s+=`<rect x="198" y="40" width="40" height="32" fill="#a37a55" ${st}/><rect x="202" y="44" width="32" height="24" fill="#d5ebf3"/><path d="M202 62q8 -9 16 -4t16 -5V68H202z" fill="#9fc58a" ${st}/><circle cx="226" cy="50" r="3" fill="#f7c948"/><rect x="246" y="46" width="22" height="30" fill="#f6c7c0" ${st}/><path d="M257 70v-12M257 62q-5 -2 -5 -7q5 1 5 7q0 -6 5 -7q0 5 -5 7" stroke="#7fae6a" stroke-width="1.2" fill="#9fc58a"/>`;
   if(sh.posters)s+=`<rect x="200" y="82" width="22" height="26" fill="#fffaf2" ${st} transform="rotate(-4 211 95)"/><path d="M204 92h14M204 97h10M204 102h12" stroke="${OUT}" stroke-width="1" opacity=".5"/><rect x="208" y="78" width="7" height="4" fill="#f7c948" opacity=".8"/><rect x="230" y="86" width="18" height="18" fill="#9fc0a8" ${st}/><path d="M233 98q3 3 6 0" stroke="#fffaf2" stroke-width="1.2" fill="none"/><rect x="252" y="84" width="16" height="20" fill="#fffaf2" ${st} transform="rotate(5 260 94)"/><rect x="255" y="87" width="10" height="10" fill="#f2a07b"/>`;
