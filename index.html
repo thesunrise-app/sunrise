@@ -352,14 +352,14 @@ function renderWeather(){
 /* ===================== Dessin : personnage ===================== */
 const OUT="#5b4636", SW=1.9;
 const st=`stroke="${OUT}" stroke-width="${SW}" stroke-linejoin="round" stroke-linecap="round"`;
-const BODY="M-23 8C-23 -17 -13 -26 0 -26C13 -26 23 -17 23 8C23 22 13 28 0 28C-13 28 -23 22 -23 8Z";
+const BODY="M0 -25A25 25 0 1 1 0 25A25 25 0 1 1 0 -25Z";
+function sunRays(t){let r="";for(let i=0;i<12;i++){const a=(i*30-90)*Math.PI/180,l=i%2?36:41,w=i%2?.15:.18;const p=(ang,rad)=>`${(Math.cos(ang)*rad).toFixed(1)} ${(Math.sin(ang)*rad).toFixed(1)}`;r+=`<path d="M${p(a-w,23)}Q${p(a,l+3)} ${p(a+w,23)}Z" fill="${t.mane}" ${st}/>`;}return r;}
 function charSVG(c,work){
   const t=TINTS[c.tint]||TINTS.soleil, HAIR="#8a5a3c";
   // couronne de rayons tout doux, seulement sur le haut de la tête
-  let m="";[-165,-138,-112,-90,-68,-42,-15].forEach(a=>{const r=a*Math.PI/180,x=Math.cos(r)*25,y=Math.sin(r)*25-2;
-    m+=`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="5.5" ry="8.5" transform="rotate(${a+90} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${t.mane}" ${st}/>`;});
-  let g=`<g class="breathe"><ellipse cx="0" cy="30" rx="24" ry="4" fill="${OUT}" opacity=".12"/>${m}`;
-  g+=`<ellipse cx="-10" cy="27" rx="7" ry="4.5" fill="${t.body}" ${st}/><ellipse cx="10" cy="27" rx="7" ry="4.5" fill="${t.body}" ${st}/>`;
+  const m=sunRays(t);
+  let g=`<g class="breathe"><ellipse cx="0" cy="36" rx="22" ry="4" fill="${OUT}" opacity=".12"/>${m}`;
+  g+=`<ellipse cx="-9" cy="31" rx="6.5" ry="4.2" fill="${t.body}" ${st}/><ellipse cx="9" cy="31" rx="6.5" ry="4.2" fill="${t.body}" ${st}/>`;
   g+=`<path d="${BODY}" fill="${t.body}" ${st}/>`;
   g+=`<path d="M-15 -14q6 -7 14 -8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".55"/>`;
   g+=`<ellipse cx="-13" cy="7" rx="4.2" ry="2.6" fill="#f3998b" opacity=".6"/><ellipse cx="13" cy="7" rx="4.2" ry="2.6" fill="#f3998b" opacity=".6"/>`;
@@ -401,8 +401,7 @@ function charSVG(c,work){
 /* ===================== Dessin : petit soleil vu de dos (au bureau) ===================== */
 function charBack(c){
   const t=TINTS[c.tint]||TINTS.soleil, HAIR="#8a5a3c";
-  let m="";for(let i=0;i<9;i++){const a=(-180+i*22.5)*Math.PI/180,x=Math.cos(a)*25,y=Math.sin(a)*25-2;
-    m+=`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="5.5" ry="8.5" transform="rotate(${-180+i*22.5+90} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${t.mane}" ${st}/>`;}
+  const m=sunRays(t);
   let g=`<g class="breathe">${m}<path d="${BODY}" fill="${t.body}" ${st}/>`;
   g+=`<ellipse cx="-24" cy="6" rx="4.5" ry="3.6" fill="${t.body}" ${st}/><ellipse cx="24" cy="6" rx="4.5" ry="3.6" fill="${t.body}" ${st}/>`;
   const H={meche:`<path d="M-2 -25q-7 -12 3 -14q7 0 3 6" fill="${HAIR}" ${st}/>`,
@@ -488,31 +487,44 @@ function room(work){
   <path d="M${X+WB.w/2} ${Y}V${Y+WB.h}" stroke="#fffaf2" stroke-width="4"/><path d="M${X+WB.w/2} ${Y}V${Y+WB.h}" stroke="${OUT}" stroke-width="1" opacity=".5"/>
   <rect x="${X-10}" y="${Y+WB.h+16}" width="${WB.w+20}" height="5" fill="#3a2a1e" opacity=".14" filter="url(#soft)"/><rect x="${X-12}" y="${Y+WB.h+8}" width="${WB.w+24}" height="7" rx="2" fill="#fffaf2" ${st}/>
   <polygon points="${X},${Y+WB.h+12} ${X+WB.w},${Y+WB.h+12} 250,${FLOOR+40} 90,${FLOOR+40}" fill="url(#beam)" opacity="${night?0.03:((0.06+0.22*(state.daily?state.pauses/state.daily:0))*dim).toFixed(2)}"/>
-  <path d="M${X-14} ${Y-16}H${X+WB.w+24}" stroke="${OUT}" stroke-width="2.6" stroke-linecap="round"/>
-  <path d="M${X+WB.w-8} ${Y-14}q14 0 26 2q-2 40 0 70q-6 4 -4 10q6 30 0 52h-22q4 -24 -2 -52q-2 -6 2 -10q-6 -36 0 -72z" fill="url(#plaid)" ${st}/>
-  <path d="M${X+WB.w-8} ${Y-14}q14 0 26 2q-2 40 0 70q-6 4 -4 10q6 30 0 52h-22q4 -24 -2 -52q-2 -6 2 -10q-6 -36 0 -72z" fill="url(#fold)"/>
-  <path d="M${X+WB.w+2} ${Y-12}q-2 30 2 66M${X+WB.w+12} ${Y-12}q2 30 -2 66M${X+WB.w+4} ${Y+70}q-4 24 0 50" stroke="${OUT}" stroke-width=".9" opacity=".4" fill="none"/>
-  <path d="M${X+WB.w-6} ${Y+62}q14 4 26 0l-1 7q-12 4 -24 0z" fill="#e9a1b5" ${st}/>
-  <path d="M${X-12} ${Y-14}q10 0 14 2q-2 30 0 56q-8 4 -14 0z" fill="url(#plaid)" ${st}/><path d="M${X-12} ${Y-14}q10 0 14 2q-2 30 0 56q-8 4 -14 0z" fill="url(#fold)"/>`;
-  if(sh.guirlande&&night)lights+=`<path d="M130 4Q200 46 300 10" fill="none" stroke="#ffe28a" stroke-width="10" opacity=".35" filter="url(#bigglow)"/>`;
-  if(sh.guirlande){let d="M130 4Q200 46 300 10",pts=[[146,14],[166,23],[186,29],[206,32],[226,32],[246,29],[266,24],[286,16]];
-    s+=`<path d="${d}" fill="none" stroke="${OUT}" stroke-width="1.2"/>`+pts.map(([x,y],i)=>`<path transform="translate(${x} ${y+5}) scale(.9)" d="M0 -6l1.8 3.8l4.2 .6l-3 3l.7 4.2l-3.7 -2l-3.7 2l.7 -4.2l-3 -3l4.2 -.6z" fill="#ffe28a" stroke="${OUT}" stroke-width="1"/><circle cx="${x}" cy="${y+5}" r="6" fill="#ffe28a" opacity=".5" filter="url(#glow)"/>`).join("");}
+  ${(()=>{const top=Y-14,T=Y+60,B=Y+WB.h+16;
+    const cur=(o,d)=>{const k=v=>o+d*v;let hem="";for(let i=0;i<4;i++)hem+=`q${-d*3.5} 4.5 ${-d*7} 0`;
+      return `M${k(-2)} ${top}L${k(30)} ${top}Q${k(22)} ${T-24} ${k(15)} ${T}Q${k(18)} ${T+30} ${k(28)} ${B}${hem}L${k(0)} ${B}Q${k(-4)} ${T} ${k(-2)} ${top}Z`;};
+    const L1=cur(X-15,1),R1=cur(X+WB.w+15,-1);
+    const folds=(o,d)=>`M${o+d*8} ${top+2}q${d*2} 30 ${d*6} ${T-top-4}M${o+d*17} ${top+2}q${-d*1} 28 ${d*1} ${T-top-6}M${o+d*8} ${T+6}q${-d*2} 20 ${d*2} ${B-T-8}M${o+d*18} ${T+6}q${d*2} 20 ${d*4} ${B-T-8}`;
+    const tie=(o,d)=>`<path d="M${o+d*8} ${T-4}q${d*10} 6 ${d*14} 2l${d*1} 6q${-d*8} 2 ${-d*16} -2z" fill="#e9a1b5" ${st}/><circle cx="${o+d*16}" cy="${T+1}" r="2.6" fill="#f6c7c0" ${st}/>`;
+    const rod=`<path d="M${X-24} ${top-2}H${X+WB.w+24}" stroke="${OUT}" stroke-width="3.4" stroke-linecap="round"/><path d="M${X-24} ${top-2}H${X+WB.w+24}" stroke="${t.wood}" stroke-width="1.5" stroke-linecap="round"/><circle cx="${X-26}" cy="${top-2}" r="3.6" fill="${t.wood}" ${st}/><circle cx="${X+WB.w+26}" cy="${top-2}" r="3.6" fill="${t.wood}" ${st}/>`;
+    const rings=[2,10,18,26].map(v=>`<circle cx="${X-15+v}" cy="${top}" r="2" fill="none" stroke="${OUT}" stroke-width="1"/><circle cx="${X+WB.w+15-v}" cy="${top}" r="2" fill="none" stroke="${OUT}" stroke-width="1"/>`).join("");
+    return rod+[L1,R1].map(d=>`<path d="${d}" fill="url(#plaid)" ${st}/><path d="${d}" fill="url(#fold)"/>`).join("")
+      +`<path d="${folds(X-15,1)}${folds(X+WB.w+15,-1)}" stroke="${OUT}" stroke-width=".9" opacity=".35" fill="none"/>`+tie(X-15,1)+tie(X+WB.w+15,-1)+rings;})()}`;
+  const GD="M10 10Q200 62 390 10", gpt=i=>{const t=i/14,u=1-t;return[u*u*10+2*u*t*200+t*t*390,u*u*10+2*u*t*62+t*t*10];};
+  if(sh.guirlande&&night)lights+=`<path d="${GD}" fill="none" stroke="#ffe28a" stroke-width="10" opacity=".35" filter="url(#bigglow)"/>`;
+  if(sh.guirlande){const pts=Array.from({length:13},(_,i)=>gpt(i+1));
+    s+=`<path d="${GD}" fill="none" stroke="${OUT}" stroke-width="1.2"/>${[[10,10],[390,10]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.6" fill="#c9b6a6" ${st}/>`).join("")}`+pts.map(([x,y])=>`<path transform="translate(${x.toFixed(1)} ${(y+5).toFixed(1)}) scale(.9)" d="M0 -6l1.8 3.8l4.2 .6l-3 3l.7 4.2l-3.7 -2l-3.7 2l.7 -4.2l-3 -3l4.2 -.6z" fill="#ffe28a" stroke="${OUT}" stroke-width="1"/><circle cx="${x.toFixed(1)}" cy="${(y+5).toFixed(1)}" r="6" fill="#ffe28a" opacity=".5" filter="url(#glow)"/>`).join("");}
   if(sh.horloge)s+=`<circle cx="166" cy="62" r="20" fill="#9fc0a8" ${st}/><circle cx="166" cy="62" r="15" fill="#fffaf2" ${st}/>${(()=>{const d=new Date(),h=(d.getHours()%12+d.getMinutes()/60)*30,m=d.getMinutes()*6,r=a=>a*Math.PI/180;let ticks="";for(let i=0;i<12;i++){const a=r(i*30);ticks+=`M${(166+Math.sin(a)*11.5).toFixed(1)} ${(62-Math.cos(a)*11.5).toFixed(1)}L${(166+Math.sin(a)*13.5).toFixed(1)} ${(62-Math.cos(a)*13.5).toFixed(1)}`;}return `<path d="${ticks}" stroke="${OUT}" stroke-width="1"/><path d="M166 62L${(166+Math.sin(r(h))*7).toFixed(1)} ${(62-Math.cos(r(h))*7).toFixed(1)}M166 62L${(166+Math.sin(r(m))*11).toFixed(1)} ${(62-Math.cos(r(m))*11).toFixed(1)}" ${st}/>`;})()}`;
   if(sh.tableau)s+=`<rect x="198" y="40" width="40" height="32" fill="#a37a55" ${st}/><rect x="202" y="44" width="32" height="24" fill="#d5ebf3"/><path d="M202 62q8 -9 16 -4t16 -5V68H202z" fill="#9fc58a" ${st}/><circle cx="226" cy="50" r="3" fill="#f7c948"/><rect x="246" y="46" width="22" height="30" fill="#f6c7c0" ${st}/><path d="M257 70v-12M257 62q-5 -2 -5 -7q5 1 5 7q0 -6 5 -7q0 5 -5 7" stroke="#7fae6a" stroke-width="1.2" fill="#9fc58a"/>`;
   if(sh.posters)s+=`<rect x="200" y="82" width="22" height="26" fill="#fffaf2" ${st} transform="rotate(-4 211 95)"/><path d="M204 92h14M204 97h10M204 102h12" stroke="${OUT}" stroke-width="1" opacity=".5"/><rect x="208" y="78" width="7" height="4" fill="#f7c948" opacity=".8"/><rect x="230" y="86" width="18" height="18" fill="#9fc0a8" ${st}/><path d="M233 98q3 3 6 0" stroke="#fffaf2" stroke-width="1.2" fill="none"/><rect x="252" y="84" width="16" height="20" fill="#fffaf2" ${st} transform="rotate(5 260 94)"/><rect x="255" y="87" width="10" height="10" fill="#f2a07b"/>`;
   if(sh.etagere)s+=`<rect x="290" y="62" width="88" height="6" rx="2" fill="#f6e7d2" ${st}/><path d="M300 68q0 10 8 10M368 68q0 10 -8 10" stroke="${OUT}" stroke-width="1.6" fill="none"/><path d="M296 62h16l-2 -14h-12z" fill="#fffaf2" ${st}/><path d="M304 48q-10 -10 -6 -22q8 6 6 22q0 -16 12 -20q2 12 -12 20" fill="#8fbf7a" ${st}/><path d="M322 62h12l-2 -10h-8z" fill="#e58d6c" ${st}/><path d="M328 52v-14M328 44q-6 -2 -6 -8q6 2 6 8q0 -7 6 -8q0 6 -6 8" stroke="#6f8f5a" stroke-width="1.2" fill="#9fc58a"/><rect x="340" y="46" width="32" height="16" rx="4" fill="#f6e7d2" ${st}/><circle cx="350" cy="54" r="4.5" fill="none" ${st}/><path d="M360 50h8M360 54h8M360 58h8" stroke="${OUT}" stroke-width="1"/><path d="M368 46l4 -18" ${st}/>`;
-  if(sh.bibliotheque){s+=shadow(352,FLOOR+2,46,4)+`<rect x="306" y="96" width="90" height="${FLOOR-96}" fill="${t.wood}" ${st}/><rect x="310" y="100" width="82" height="${FLOOR-104}" fill="#3a2a1e" opacity=".22"/>`;
-    [128,160,192].forEach(y=>s+=`<path d="M306 ${y}H396" ${st}/>`);
-    const book=(x,y,h,w,c)=>`<rect x="${x}" y="${y-h}" width="${w}" height="${h}" fill="${c}" stroke="${OUT}" stroke-width="1.2"/><path d="M${x+1} ${y-h+3}h${w-2}M${x+1} ${y-4}h${w-2}" stroke="#3a2a1e" stroke-width=".7" opacity=".35"/>`;
-    const cols=["#f2a07b","#9fc58a","#7fa8c9","#f7c948","#e9a1b5","#fffaf2","#c9b6e4"];
-    let x=312;for(let i=0;i<9;i++){const w=6+(i*3)%4;s+=book(x,128,18+(i*5)%9,w,cols[i%7]);x+=w;}
-    s+=`<path d="M372 128h16l-2 -12h-12z" fill="#e58d6c" stroke="${OUT}" stroke-width="1.2"/><path d="M380 116q-6 -6 -4 -12q6 3 4 12q0 -8 7 -10q1 6 -7 10" fill="#8fbf7a" stroke="${OUT}" stroke-width="1.2"/>`;
-    x=312;for(let i=0;i<6;i++){const w=6+(i*5)%5;s+=book(x,160,16+(i*7)%10,w,cols[(i+3)%7]);x+=w;}
-    s+=`<circle cx="378" cy="150" r="8" fill="#9fc0dd" stroke="${OUT}" stroke-width="1.2"/><path d="M374 146q4 2 3 6M380 148q2 4 0 6" stroke="#7fae6a" stroke-width="1.6" fill="none"/><path d="M378 158v2M372 160h12" stroke="${OUT}" stroke-width="1.2"/>`;
-    if(sh.platine)s+=`<rect x="312" y="174" width="44" height="18" rx="2" fill="#c9935f" stroke="${OUT}" stroke-width="1.2"/><ellipse cx="330" cy="177" rx="12" ry="3" fill="#3d3550" stroke="${OUT}" stroke-width="1"/><path d="M350 174l-6 4" stroke="${OUT}" stroke-width="1.2"/>`;
-    else{x=312;for(let i=0;i<5;i++){const w=7;s+=book(x,192,15+(i*4)%8,w,cols[(i+1)%7]);x+=w;}}
-    s+=`<rect x="362" y="178" width="26" height="14" fill="#f6e7d2" stroke="${OUT}" stroke-width="1.2"/>`;
-    x=312;for(let i=0;i<8;i++){const w=6+(i*3)%4;s+=book(x,FLOOR-2,18+(i*4)%9,w,cols[(i+5)%7]);x+=w;}}
+  if(sh.bibliotheque){
+    const B0=96,BL=304,BR=396,sh2=[128,160,192,FLOOR-6];
+    s+=shadow(350,FLOOR+2,50,4)+`<rect x="${BL}" y="${B0}" width="${BR-BL}" height="${FLOOR-B0}" fill="${t.wood}" ${st}/><rect x="${BL+5}" y="${B0+4}" width="${BR-BL-10}" height="${FLOOR-B0-12}" fill="#3a2a1e" opacity=".24"/>
+    <rect x="${BL-4}" y="${B0-7}" width="${BR-BL+8}" height="8" rx="2" fill="${t.wood}" ${st}/><path d="M${BL-2} ${B0-5}H${BR+2}" stroke="#fff" stroke-width="1" opacity=".35"/>
+    <rect x="${BL-2}" y="${FLOOR-6}" width="${BR-BL+4}" height="8" fill="${t.wood}" ${st}/><path d="M${BL+5} ${B0}V${FLOOR-6}M${BR-5} ${B0}V${FLOOR-6}" stroke="${OUT}" stroke-width="1.2" opacity=".6"/>`;
+    sh2.slice(0,3).forEach(y=>s+=`<rect x="${BL+5}" y="${y}" width="${BR-BL-10}" height="5" fill="${t.wood}" ${st}/><path d="M${BL+5} ${y+5}H${BR-5}" stroke="#3a2a1e" stroke-width="2" opacity=".18"/>`);
+    const cols=["#f2a07b","#9fc58a","#7fa8c9","#f7c948","#e9a1b5","#fffaf2","#c9b6e4","#d98c7c"];
+    const book=(x,y,h,w,c)=>`<rect x="${x}" y="${y-h}" width="${w}" height="${h}" rx=".8" fill="${c}" stroke="${OUT}" stroke-width="1.1"/><path d="M${x+1} ${y-h+3}h${w-2}M${x+1} ${y-4}h${w-2}" stroke="#3a2a1e" stroke-width=".7" opacity=".35"/>`;
+    const row=(y,x0,x1,seed)=>{let x=x0,o="",i=0;while(x<x1-5){const w=Math.min(5+((i+seed)*7)%4,x1-x);if(w<4)break;o+=book(x,y,17+((i+seed)*5)%8,w,cols[(i+seed)%8]);x+=w;i++;}return o;};
+    // étage 1 : livres + plante
+    s+=row(128,BL+7,364,0)+`<path d="M368 128h18l-2 -12h-14z" fill="#e58d6c" stroke="${OUT}" stroke-width="1.1"/><path d="M377 116q-7 -6 -5 -13q7 3 5 13q0 -9 8 -11q1 7 -8 11" fill="#8fbf7a" stroke="${OUT}" stroke-width="1.1"/><path d="M370 116q-6 2 -10 8" stroke="#7fae6a" stroke-width="1.6" fill="none"/>`;
+    // étage 2 : livres penchés + globe
+    s+=row(160,BL+7,346,3)+`<path d="M346 160l8 -18l5 2l-8 16z" fill="#c9b6e4" stroke="${OUT}" stroke-width="1.1"/><circle cx="374" cy="148" r="8" fill="#9fc0dd" stroke="${OUT}" stroke-width="1.1"/><path d="M370 144q4 2 3 6M376 146q2 4 0 6" stroke="#7fae6a" stroke-width="1.6" fill="none"/><path d="M366 148a8 8 0 0 0 16 0" fill="none" stroke="${OUT}" stroke-width="1" opacity=".6"/><path d="M374 156v3M368 160h12" stroke="${OUT}" stroke-width="1.2"/>`;
+    // étage 3 : platine ou boîte + livres
+    s+=(sh.platine?`<rect x="${BL+8}" y="174" width="46" height="18" rx="2" fill="#c9935f" stroke="${OUT}" stroke-width="1.1"/><path d="M${BL+8} 183h46" stroke="${OUT}" stroke-width=".8" opacity=".5"/><ellipse cx="${BL+28}" cy="176.5" rx="13" ry="3" fill="#3d3550" stroke="${OUT}" stroke-width="1"/><circle cx="${BL+28}" cy="176.5" r="1.4" fill="#f2a07b"/><path d="M${BL+48} 174l-7 4" stroke="${OUT}" stroke-width="1.2"/>`
+      :`<rect x="${BL+8}" y="176" width="44" height="16" rx="2" fill="#f6e7d2" stroke="${OUT}" stroke-width="1.1"/><path d="M${BL+24} 182h12" stroke="${OUT}" stroke-width="1.6" stroke-linecap="round"/>`)+row(192,BL+56,BR-7,5);
+    // étage 4 : livres + panier
+    s+=row(FLOOR-6,BL+7,354,1)+`<path d="M356 ${FLOOR-6}l2 -18h28l2 18z" fill="#d9b48a" stroke="${OUT}" stroke-width="1.1"/><path d="M358 ${FLOOR-18}h28M357 ${FLOOR-12}h30M364 ${FLOOR-24}v18M372 ${FLOOR-24}v18M380 ${FLOOR-24}v18" stroke="${OUT}" stroke-width=".8" opacity=".5"/><path d="M362 ${FLOOR-24}q10 -10 20 0" fill="none" stroke="${OUT}" stroke-width="1.4"/>`;
+    s+=`<path d="M${BL+2} ${FLOOR+2}v4M${BR-2} ${FLOOR+2}v4" stroke="${OUT}" stroke-width="3" stroke-linecap="round"/>`;
+  }
   if(sh.monstera)s+=shadow(36,FLOOR+20,24,4)+`<path d="M22 ${FLOOR+20}h28l-4 -30h-20z" fill="#f6e7d2" ${st}/><path d="M30 ${FLOOR+20}l-2 6M44 ${FLOOR+20}l2 6" ${st}/><path d="M36 ${FLOOR-10}q-26 -10 -24 -42q18 10 24 42q-6 -38 14 -58q12 26 -14 58q14 -28 32 -30q-2 24 -32 30" fill="#7fae6a" ${st}/>`;
   // tapis
   s+=sh.tapisdoux?`<path d="M96 288L132 248H300L330 288Z" fill="#e38a7a" ${st}/><path d="M108 284L138 252H294L318 284Z" fill="none" stroke="#fffaf2" stroke-width="1.6"/><path d="M150 252l-10 32M180 252l-6 32M210 252l-2 32M240 252l2 32M270 252l6 32M126 268H306" stroke="#f6b2a4" stroke-width="2"/>`
@@ -542,7 +554,16 @@ function room(work){
   s+=`</g>`;
   if(work)s+=`<g transform="translate(206 182) scale(.95)" filter="url(#rough)">${charBack(state.char)}</g>`;
   s+=`<g filter="url(#rough)">${chairBack}</g>`;
-  if(sh.chaton)s+=`<g transform="translate(64 ${FLOOR+40})" filter="url(#rough)">${shadow(4,8,20,4)}<path d="M18 2q14 2 10 -12" fill="none" stroke="${OUT}" stroke-width="4.5" stroke-linecap="round"/><path d="M18 2q14 2 10 -12" fill="none" stroke="#f5b26b" stroke-width="2" stroke-linecap="round"/><ellipse cx="6" cy="0" rx="18" ry="9" fill="#f5b26b" ${st}/><circle cx="-10" cy="-3" r="8" fill="#f5b26b" ${st}/><path d="M-16 -9l1 -8l5 5zM-8 -10l4 -7l2 8z" fill="#f5b26b" ${st}/><path d="M-14 -3q2 1.5 4 0M-8 -3q2 1.5 4 0" fill="none" stroke="${OUT}" stroke-width="1.2"/></g>`;
+  if(sh.chaton)s+=`<g transform="translate(66 ${FLOOR+38})" filter="url(#rough)">${shadow(2,10,30,5)}
+    <path d="M-26 6q-6 -18 14 -22q20 -4 34 6q10 8 4 18q-4 6 -22 6q-24 0 -30 -8z" fill="#f5b26b" ${st}/>
+    <path d="M-6 -14q2 8 -2 18M6 -14q2 8 -1 18M16 -10q2 8 -2 16" stroke="#e08c42" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M24 10q8 4 2 10q-10 6 -38 4" fill="none" stroke="${OUT}" stroke-width="5.6" stroke-linecap="round"/><path d="M24 10q8 4 2 10q-10 6 -38 4" fill="none" stroke="#f5b26b" stroke-width="3" stroke-linecap="round"/><path d="M-10 23q-3 1 -4 0" stroke="#e08c42" stroke-width="2" stroke-linecap="round"/>
+    <ellipse cx="-22" cy="4" rx="14" ry="11" fill="#f5b26b" ${st}/>
+    <path d="M-33 -3l-2 -11l9 6zM-17 -6l5 -10l3 11z" fill="#f5b26b" ${st}/><path d="M-32 -6l-1 -5l4 3zM-15 -8l3 -5l1 5z" fill="#f6c7c0"/>
+    <path d="M-29 4q2 2 4 0M-20 4q2 2 4 0" fill="none" stroke="${OUT}" stroke-width="1.3" stroke-linecap="round"/><path d="M-23.5 7.5l1.5 1.2l1.5 -1.2" fill="#e98b8b" stroke="${OUT}" stroke-width=".8"/>
+    <path d="M-36 8h-6M-36 10.5l-5 2M-9 8h6M-9 10.5l5 2" stroke="${OUT}" stroke-width=".7" opacity=".6"/>
+    <ellipse cx="-12" cy="14" rx="5" ry="3.4" fill="#fbd3a6" ${st}/><ellipse cx="-2" cy="15" rx="5" ry="3.4" fill="#fbd3a6" ${st}/>
+    <text x="10" y="-14" font-family="Gaegu,cursive" font-size="9" fill="${OUT}" opacity=".6">z</text><text x="16" y="-22" font-family="Gaegu,cursive" font-size="7" fill="${OUT}" opacity=".5">z</text></g>`;
   if(sh.pouf)s+=`<g transform="translate(118 ${FLOOR+44})" filter="url(#rough)">${shadow(0,9,22,4)}<path d="M-20 0v-10a20 8 0 0 1 40 0v10a20 8 0 0 1 -40 0z" fill="#9fc58a" ${st}/><ellipse cy="-10" rx="20" ry="8" fill="#b9d6a5" ${st}/></g>`;
   // petit soleil debout dans la chambre quand on ne travaille pas
   if(!work)s+=`<g transform="translate(${sh.bibliotheque?262:330} ${FLOOR+19}) scale(1.05)" filter="url(#rough)">${charSVG(state.char,false)}</g>`;
